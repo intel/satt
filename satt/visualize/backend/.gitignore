@@ -1,0 +1,4 @@
+env
+backup
+tmp
+*.pyc

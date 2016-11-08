@@ -1,0 +1,94 @@
+<!--
+Copyright (c) 2015 Intel Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<div id="graph-{{$id}}" class="row-fluid header-container">
+    <div class="pull-left" ng-show="cpus">
+        <div class="btn-group toggle-buttons">
+          <button class="btn btn-mini badge" ng-class="{'selected': threadOrProcessView};"
+            title="Thread view, sort execution by Threads" ng-click="setThreadView(true)">Threads</button>
+          <button class="btn btn-mini badge" ng-class="{'selected': !threadOrProcessView};"
+            title="Process view, sort execution by Processes" ng-click="setThreadView(false)">Processes</button>
+        </div>
+        <div class="group-break">
+          <div class="mask"></div>
+        </div>
+        <span id="cpu_buttons">
+          <button class="btn btn-mini badge {{cpu.class}} cpu-button" title="Highlight one CPU in Graph"
+            ng-click="cpuMouseclick(cpu.class)" ng-repeat="cpu in cpus">{{cpu.n}}</button>
+        </span>
+        <div class="group-break"><div class="mask"></div></div>
+        <button class="btn btn-mini badge" ng-class="{'selected': cbrVisible};" ng-click="cbrClick(cpu.class)" title="Core Bus Ratio - to show CPU frequency">CPU Freq</button>
+        <span class="cbr" ng-show="cbrVisible">
+        <span class="acbr" title="Actual CBR" >acbr</span>
+        <span class="ecbr" title="Effective CBR" >ecbr</span></span>
+        <div class="group-break"><div class="mask"></div></div>
+        <span>
+          <img ng-show="httpRequestActive" src="styles/img/small-loader.gif" />
+        </span>
+    </div>
+    <div class="pull-left" ng-show="cpus">
+      <div class="sat-header-container pull-left"><small class="time-title">Length:</small> <span class="time">{{end - start | nester}}</span>
+      <span class="time" ng-show="selStart">  [ {{selEnd - selStart | nester}} ]</span></div>
+    </div>
+
+    <div class="window-manager" ng-include src="'views/windowmanager.html'"></div>
+
+    <div class="pull-right">
+
+      <span ng-show="cpus" id="statistics">
+        <button class="btn btn-mini badge" ng-click="openStatistics()" title="Open statistics from this graphs timespan">statistics</button>
+      </span>
+      <div class="btn-group">
+        <a class="btn dropdown-toggle">
+          <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+          <!-- dropdown menu links -->
+          <li><a href="#" ng-class="{active: overflow.active}" ng-click="showOverflows()" eat-click><i class="icon-wrench"></i>Overflows</a></li>
+          <li><a href="#" ng-class="{active: lost.active}" ng-click="showLost()" eat-click><i class="icon-wrench"></i> Lost</a></li>
+        </ul>
+      </div>
+    </div>
+    <!-- <div class="span1 window-manager" /> -->
+</div>
+<div class="row-fluid graph-container winm">
+    <div class="graph"></div>
+    <div ng-show="threadOrProcessView">
+      <div class="process" ng-style="process.color" ng-repeat="process in processes"
+      ng-mouseenter="pMouseEnter($index, {clientY:$event.clientY, clientX:$event.clientX})"
+      ng-mouseleave="pMouseLeave()"
+      ng-click="pMouseClick($index)"
+      >{{process.n}}
+      </div>
+    </div>
+    <div ng-show="!threadOrProcessView">
+      <div class="process" ng-style="process.color" ng-repeat="process in mainProcesses"
+      ng-mouseenter="pMouseEnter($index, {clientY:$event.clientY, clientX:$event.clientX})"
+      ng-mouseleave="pMouseLeave()"
+      ng-click="pMouseClick($index)"
+      >{{process.pn}}
+      </div>
+    </div>
+    <div ng-cloak ng-show="threadInfo" ng-style="threadInfoStyle" class="threadinfo">
+      <ul>
+        <li><strong>Process:</strong> {{threadInfo.pn}} ( {{threadInfo.tgid}} )</li>
+      </ul>
+      <div ng-show="childThreads">
+        <ul ng-repeat="c in childThreads">
+        <li> - <strong> Thread : </strong> <span class="{{c.high}}">{{c.n}} ( {{c.tid}} )</span></li>
+        </ul>
+      </div>
+    </div>
+</div>

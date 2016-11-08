@@ -1,0 +1,105 @@
+'''
+// Copyright (c) 2015 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+'''
+
+import sys, os
+import tarfile
+import gzip
+
+#
+# pack-binaries: Pack processed SAT-trace binaries.
+#   E.g. to reproduce postprocessing afterwards
+#
+# hint: use pack-trace to pack also trace data
+#
+
+def usage(exit_reason):
+    if not os.path.exists(SAT_PATH_KERNEL):
+        print 'Expected environment variables:'
+        print '       SAT_PATH_KERNEL=<path to kernel objects>'
+    print 'USAGE: pack-binaries <tracefolder>'
+    sys.exit(exit_reason)
+
+# Initialize
+SAT_PATH_KERNEL = os.environ.get('SAT_PATH_KERNEL')
+if not os.path.exists(SAT_PATH_KERNEL):
+    print 'ERROR: env variable SAT_PATH_KERNEL not found'
+    usage(1)
+if not SAT_PATH_KERNEL[-1:] == '/':
+    SAT_PATH_KERNEL += '/'
+
+if len(sys.argv) < 2:
+    print 'ERROR:  missing argument!!'
+    usage(1)
+
+traceid = sys.argv[1]
+if traceid[-1:] == '/':
+    traceid = traceid[:-1]
+
+if not os.path.exists(traceid):
+    print 'ERROR: Trace folder does not found'
+    usage(1)
+
+fpath_satmodh = os.path.join(traceid,traceid+'.satmodh')
+fpath_satmod = os.path.join(traceid,traceid+'.satmod')
+
+if not ( os.path.exists(fpath_satmodh) and
+         os.path.exists(fpath_satmod)):
+    print 'ERROR: ' + traceid + '.satmod(h) file or files not found'
+    print '        Has trace been processed?'
+    usage(1)
+
+with open(fpath_satmod,'r') as f:
+    satmod = f.read().splitlines()
+satmod = [x.split('|')[1] for x in satmod]
+
+with open(fpath_satmodh,'r') as f:
+    satmodh = f.read().splitlines()
+satmodh = [x.split('|')[1] for x in satmodh]
+
+# Pack files
+output_tarfile = traceid + '-binaries.tgz'
+print 'INFO: pack trace data into ' + output_tarfile + ' file'
+
+with tarfile.open(output_tarfile, 'w:gz', compresslevel=1) as tar:
+    for i in range(len(satmodh)):
+        try:
+            if satmodh[i][-3:] == '.ko':
+                tar.add(satmodh[i], os.path.join('kernel', 'ld-modules',satmod[i]))
+                print os.path.join('kernel', 'ld-modules',satmod[i])
+            elif satmod[i][-7:] == 'vmlinux':
+                tar.add(satmodh[i], os.path.join('kernel',satmod[i][-7:]))
+                print os.path.join('kernel',satmod[i][-7:])
+            else:
+                tar.add(satmodh[i], satmod[i])
+                print satmod[i]
+        except:
+            print 'Warning: file not found ' + satmodh[i]
+
+    if os.path.exists(SAT_PATH_KERNEL):
+        if os.path.exists(SAT_PATH_KERNEL + os.path.join('arch', 'x86', 'vdso', 'vdso32-sysenter.so')):
+            tar.add(SAT_PATH_KERNEL + os.path.join('arch', 'x86', 'vdso', 'vdso32-sysenter.so'),
+                os.path.join('symbols', 'linux-gate.so.1'))
+            print os.path.join('symbols', 'linux-gate.so.1')
+        else:
+            print 'Warning: file not found ' + SAT_PATH_KERNEL + os.path.join('arch', 'x86', 'vdso', 'vdso32-sysenter.so')
+        if os.path.exists(SAT_PATH_KERNEL + '/System.map'):
+            tar.add(SAT_PATH_KERNEL + '/System.map', os.path.join('kernel', 'System.map'))
+            print os.path.join('kernel','System.map')
+        else:
+            print 'Warning: file not found ' + SAT_PATH_KERNEL + '/System.map'
+
+    # $SAT_TARGET_BUILD/linux/kernel/vmlinux_patched
+    # $SAT_TARGET_BUILD/symbols/ld-modules/

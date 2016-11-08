@@ -1,0 +1,6 @@
+*.swp
+.sconsign.dblite
+*.o
+*.a
+src/sat-intermediate
+src/sat-sideband-dump

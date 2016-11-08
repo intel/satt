@@ -1,0 +1,7 @@
+*.swp
+.sconsign.dblite
+*.o
+*.a
+src/sat-intermediate
+src/sat-compress-output
+src/sat-shrink-output

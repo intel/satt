@@ -1,0 +1,12 @@
+*.swp
+*.o
+*.a
+.parts.cache/
+.sconsign.dblite
+install/
+build/
+logs/
+sdks/
+vcs/
+sat-elf-dump
+sat-disassembler-dump

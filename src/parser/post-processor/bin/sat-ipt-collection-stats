@@ -1,0 +1,3 @@
+#!/bin/sh
+[ "$(getconf LONG_BIT)" = "64" ] && EXTN=_64 || EXTN=
+exec $(dirname $0)/x86${EXTN}/$(basename $0) "$@"

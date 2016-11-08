@@ -1,0 +1,166 @@
+#!/bin/bash
+
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+#
+# *********  SATT release creator **********
+#
+#  You need to have SATT folders
+#  up and ready for release
+#
+#  Needs markdown --> apt-get install markdown
+#
+#   RUN #> release-sat,
+#    -c flag will get current TAG and does
+#       release from it
+#    * it will bump and ask version number
+#    * commit and push version number to git
+#    * create tar package
+#    * push files to server
+#    * change ln link to latest release
+#******************************************
+
+# IF DEBUG Enable do not send release to Server
+#DEBUG="Uncomment to enable DEBUG"
+
+
+SATT_RELEASE_SERVER_PREFIX="http://"
+SATT_RELEASE_SERVER="satt.example.com"
+
+SATT_GIT_COMMIT_URL="https://github.com/01org/satt/commit/%H"
+
+#
+# Handle command line arguments
+#
+while [[ $# > 0 ]]
+do
+key="$1"
+
+case $key in
+    -c|--current)
+    # Current tag as version number
+    CURRENT_TAG=`git describe --tags`
+    SAT_VERSION=$CURRENT_TAG
+    if [[ $CURRENT_TAG == *"-"* ]]
+    then
+        echo "Not in TAG"
+        exit
+    fi
+    ;;
+    -v|--version)
+    # Trust given version number to create release
+    SAT_VERSION="$2"
+    shift # past argument
+    ;;
+    *)
+    echo "Unknown option"
+    exit
+    ;;
+esac
+shift # past argument or value
+done
+
+
+ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+
+# $SAT_HOME --> Path to SAT-tool root folder
+export SAT_HOME=$(cd $ABSOLUTE_PATH/../../ && pwd )
+
+# Add bin folder into path
+# export PATH=$PATH:$ABSOLUTE_PATH
+
+cd $SAT_HOME
+
+# Get version from server
+VERSION="`wget -qO- ${SATT_RELEASE_SERVER_PREFIX}$SATT_RELEASE_SERVER/releases/version.txt`"
+
+# And from local
+LOCAL_VERSION=`cat $SAT_HOME/.version`
+
+if [ -n "$SAT_VERSION" ]; then
+    echo "Current SATT-server version : $VERSION"
+    echo "Current SATT-local version  : $LOCAL_VERSION"
+    echo "Creating New SAT release   : $SAT_VERSION"
+    NEW_LOCAL_VERSION=$SAT_VERSION
+else
+    BASE_LIST=(`echo $LOCAL_VERSION | tr '.' ' '`)
+    V_MAJOR=${BASE_LIST[0]}
+    V_MINOR=${BASE_LIST[1]}
+    V_PATCH=${BASE_LIST[2]}
+    echo "Current SATT-server version : $VERSION"
+    echo "Current SATT-local version  : $LOCAL_VERSION"
+
+    V_PATCH=$((V_PATCH + 1))
+    SUGGESTED_VERSION="$V_MAJOR.$V_MINOR.$V_PATCH"
+    read -p "Enter a version number [$SUGGESTED_VERSION]: " NEW_LOCAL_VERSION
+    if [ "$NEW_LOCAL_VERSION" = "" ]; then
+        NEW_LOCAL_VERSION=$SUGGESTED_VERSION
+    fi
+fi
+
+# Only binary releases will have .version file we use TAGS
+echo $NEW_LOCAL_VERSION > .version
+
+mkdir -p $SAT_HOME/releases
+
+cd $SAT_HOME
+
+NEW_SAT_REL_FILENAME=sat-release-v$NEW_LOCAL_VERSION.tgz
+
+tar --exclude='satt/devel' -cvzf releases/$NEW_SAT_REL_FILENAME bin conf .version doc README.md satt src/kernel-module
+
+if [ -z "$DEBUG" ]; then
+    scp releases/$NEW_SAT_REL_FILENAME $SATT_RELEASE_SERVER:/var/www/releases/
+    scp .version $SATT_RELEASE_SERVER:/var/www/releases/version.txt
+
+    ssh $SATT_RELEASE_SERVER "cd /var/www/releases; rm sat-latest.tgz; ln -s $NEW_SAT_REL_FILENAME sat-latest.tgz"
+fi
+
+# If relaying current tag, create release note
+if [ -n "$CURRENT_TAG" ]; then
+    REL_NOTE_MD=releases/sat-release-note-v$NEW_LOCAL_VERSION.md
+    REL_NOTE_HTML=releases/sat-release-note-v$NEW_LOCAL_VERSION.html
+    PREV_HASH=`git rev-list --tags --max-count=1 --skip=1`
+    PREVIOUS_TAG=`git describe --abbrev=0 --tags $PREV_HASH`
+    if [ ! -n "$PREVIOUS_TAG" ]; then
+        echo "No previous tag found, do not create release note"
+        exit
+    fi
+    TITLE="SAT release $CURRENT_TAG"
+    echo $TITLE > $REL_NOTE_MD
+    COUNTER=${#TITLE}
+    TMP=""
+    until [ $COUNTER -lt 1 ]; do
+        TMP="$TMP="
+        let COUNTER-=1
+    done
+    echo "$TMP" >> $REL_NOTE_MD
+    echo "" >> $REL_NOTE_MD
+    echo "**Changes from $PREVIOUS_TAG to $CURRENT_TAG release**" >> $REL_NOTE_MD
+    echo "" >> $REL_NOTE_MD
+    git log --pretty=format:" * [view commit]($SATT_GIT_COMMIT_URL) %s " --reverse $PREVIOUS_TAG..$CURRENT_TAG >> $REL_NOTE_MD
+
+    if which markdown >/dev/null; then
+        markdown $REL_NOTE_MD > $REL_NOTE_HTML
+        if [ -z "$DEBUG" ]; then
+            scp $REL_NOTE_HTML $SATT_RELEASE_SERVER:/var/www/releases/
+        fi
+    fi
+
+    if [ -z "$DEBUG" ]; then
+        scp $REL_NOTE_MD $SATT_RELEASE_SERVER:/var/www/releases/
+    fi
+fi

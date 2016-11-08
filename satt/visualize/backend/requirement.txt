@@ -1,0 +1,9 @@
+Flask>=0.10.1
+Werkzeug>=0.9.3
+argparse>=1.2.1
+psycopg2>=2.5.5
+simplejson>=3.3
+rq
+pyadb
+pyelftools
+requests

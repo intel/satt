@@ -1,0 +1,16 @@
+*.o
+*.o.cmd
+*.o.d
+*.ko
+.*.ko.cmd
+.*.ko.unsigned.cmd
+.*.gcno
+Module.symvers
+Modules.symvers
+*.mod.c
+modules.order
+Module.markers
+.tmp_versions/
+helper_symbols.h
+.sat.ko.stripped.cmd
+sat.ko.*

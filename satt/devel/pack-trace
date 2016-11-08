@@ -1,0 +1,55 @@
+'''
+// Copyright (c) 2015 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+'''
+
+import sys, os
+import tarfile
+import gzip
+
+if len(sys.argv) < 2:
+    print 'Too few arguments!!\n'
+    sys.exit(1)
+
+filelist = ['build_info.p',
+            'cpu_offsets.txt',
+            'screen.png',
+            'sideband.bin',
+            os.path.join('binaries', 'sat.ko'),
+            os.path.join('binaries', 'kernel_dump'),
+            os.path.join('binaries', 'kmod')]
+
+traceid = sys.argv[1]
+if traceid[-1:] == "/":
+    traceid = traceid[:-1]
+
+output_tarfile = traceid + '-trace.tgz'
+print 'pack trace data into ' + output_tarfile + ' file'
+with tarfile.open(output_tarfile, 'w:gz') as tar:
+    # pack cpu.bin files
+    cpuid = 0;
+    cpufilename = os.path.join(traceid, 'cpu' + str(cpuid) + '.bin')
+    while (os.path.isfile(cpufilename)):
+        print '  ' + cpufilename
+        tar.add(cpufilename)
+        cpuid += 1
+        cpufilename = os.path.join(traceid, 'cpu' + str(cpuid) + '.bin')
+
+    # pack rest of the files
+
+    for source in filelist:
+        path = os.path.join(traceid, source)
+        print '  ' + path
+        if os.path.isfile(path) or os.path.isdir(path):
+            tar.add(path)

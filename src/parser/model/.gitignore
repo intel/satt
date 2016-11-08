@@ -1,0 +1,5 @@
+.sconsign.dblite
+*.o
+*.swp
+src/sat-rtit-model
+src/sat-dump-scheduling-heuristics

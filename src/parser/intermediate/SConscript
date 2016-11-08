@@ -1,0 +1,41 @@
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Import(['env', 'srcdirs', 'libdirs', 'installdir'])
+
+components = ['common', 'disassembler']
+
+component_srcdirs = [ srcdirs[x] for x in components ]
+component_libdirs = [ libdirs[x] for x in components ]
+
+localenv = env.Clone()
+localenv.Append(CPPPATH = component_srcdirs)
+
+localenv.Program(['sat-intermediate.cpp',
+                  'sat-system-map.cpp'],
+                 LIBS = ['sat-disassembler',
+                         'sat-common'],
+                 LIBPATH = component_libdirs)
+localenv.Program(['sat-post.cpp',
+                  'sat-every.cpp'])
+localenv.Program(['sat-compress-output.cpp'])
+localenv.Program(['sat-shrink-output.cpp'])
+localenv.Program(['sat-merge.cpp'])
+localenv.Install(installdir, [
+                               'sat-intermediate',
+                               'sat-post',
+                               'sat-merge',
+                               'sat-shrink-output'
+                             ])

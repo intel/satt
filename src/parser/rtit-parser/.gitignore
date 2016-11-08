@@ -1,0 +1,10 @@
+*.swp
+.sconsign.dblite
+*.o
+*.a
+src/sat-rtit-dump
+src/sat-rtit-dump-time
+src/sat-rtit-stats
+src/sat-dump-overflow-times
+src/sat-rtit-dump-tscs
+src/sat-rtit-dump-tsc-heuristics

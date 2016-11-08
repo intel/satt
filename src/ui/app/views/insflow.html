@@ -1,0 +1,90 @@
+<!--
+Copyright (c) 2015 Intel Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<div id="insflow-{{$id}}" class="row-fluid header-container">
+    <div class="pull-left">
+      <div class="sat-header-container pull-left">
+        <small class="time-title">Thread: </small>
+        <span class="time">{{ info.pname }} <small class="time-title">({{info.pid}})</small></span>
+      </div>
+      <div class="group-break pull-left">
+        <div class="mask"></div>
+      </div>
+      <div class="pull-left">
+        <div class="sat-header-container pull-left">
+            <small class="time-title">Length:</small> <span class="time">{{info.end-info.start | nester}}</span>
+            <small class="time-title">Timespan:</small><span class="time">  ( {{info.start | nester}} - {{info.end | nester}} )</span>
+        </div>
+      </div>
+      <div class="group-break pull-left">
+        <div class="mask"></div>
+      </div>
+    </div>
+
+    <div class="window-manager" ng-include src="'views/windowmanager.html'">
+    </div>
+
+    <div class="pull-right sat-header-container">
+        <button class="btn btn-mini badge right-margin" ng-class="{'selected': autoOpenFlow};" ng-click="toggleAutoOpenFlow()" title="Open automagically biggest function call, if confidence is high enough">{{autoOpenFlow?'Disable':'Enable'}} auto open</button>
+        <button class="btn btn-mini badge right-margin" ng-class="{'selected': eRowVisible};" ng-click="toggleERows()" title="Show and Hide execution rows in Function flow view">{{eRowVisible?'Hide':'Show'}} execution</button>
+    </div>
+
+</div>
+
+<div class="row-fluid insflow-container container-fluid winm">
+  <div class="row-fluid">
+    <div class="span11">
+      <table class="table table-hover insflow">
+        <thead>
+          <tr>
+            <th title="Wall Clock time in nano seconds">Timestamp (ns)</th>
+            <th title="Executing CPU">cpu</th>
+            <th title="Duration = Out Of Thread time + In Thread time. Cumulative time function spend executing and when it was scheduled out.">Duration (ns)</th>
+            <th title="How long time function was scheduled out of execution, cumulative">Out Of Thread (ns)</th>
+            <th title="Time how long function was actually executing in CPU, cumulative">In Thread (ns)</th>
+            <th title="Instruction count per row" ng-hide="!eRowVisible">Instructions</th>
+            <th title="Instruction count / Time spend" ng-hide="!eRowVisible">Time/ins(ns)</th>
+            <th>Module</th>
+            <th>Symbol name</th>
+          </tr>
+        </thead>
+        <tbody class="table-rows">
+            <tr ng-style="{{row.bgColor}}" ng-repeat="row in calls | eRowsVisible:eRowVisible" ng-mouseover="enter(row.time)" ng-click="click(row.time, row.cl)" class="{{row.cl}}">
+              <td ng-hide="row.cl=='m'" id="{{row.id}}">{{row.time}}</td>
+              <td ng-hide="row.cl=='m'">{{row.cpu}}</td>
+              <td ng-hide="row.cl=='m'" class="aright">{{row.duration}}</td>
+              <td ng-hide="row.cl=='m'" class="aright">{{row.of}}</td>
+              <td ng-hide="row.cl=='m'" class="aright">{{row.it}}</td>
+              <td ng-hide="!eRowVisible" ng-hide="row.cl=='m'" class="aright">{{row.in}}</td>
+              <td ng-hide="!eRowVisible" ng-hide="row.cl=='m'" class="aright">{{row.tPerIns}}</td>
+              <td ng-hide="row.cl=='m'">{{row.mod}}</td>
+              <td ng-hide="row.cl=='m'" class="symbol-name">{{row.level}}{{row.sym}}</td>
+              <td ng-show="row.cl=='m'" class="acenter" colspan="9"> - - - show more rows ( total: {{ row.row_count }} ) - - - </td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="span1 call-stack">
+      <div autoexpand fixedscroll>
+        <h6>Call Stack</h6>
+        <ul class="unstyled" ng-repeat="node in callStacks">
+          <li ng-class="{selected: row.id==higlightId}" ng-repeat="row in node">
+            <a ng-click="scrollTo(row.id)">{{row.sym}}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

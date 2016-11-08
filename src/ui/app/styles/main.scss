@@ -1,0 +1,545 @@
+
+$iconSpritePath: "img/glyphicons-halflings.png" !default;
+$iconWhiteSpritePath:     "img/glyphicons-halflings-white.png" !default;
+
+@import "bootstrap";
+
+@import "../components/font-awesome/scss/font-awesome.scss";
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}
+
+$borderColor: #DBDBDB !default;
+$satTableBorder: #F5F5F5 !default;
+
+html {
+    overflow-y: scroll;
+}
+
+body {
+    padding-top: 40px;
+}
+
+rect {
+  fill-opacity:1;
+  stroke-opacity:0;
+}
+
+.y line {
+  stroke-width:1;
+  stroke-opacity:1;
+}
+
+line {
+  stroke-width:1;
+  stroke-opacity:1;
+}
+
+svg {
+    height:100%;
+    width:100%
+    }
+
+.container-fluid {
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
+.graph {
+    border: 1px solid $borderColor;
+    z-index: 100;
+    margin-bottom: 1px;
+    border-top: none;
+}
+
+.selActions {
+    position:absolute;
+    width: 200px;
+    min-height: 100px;
+    margin-top: 10px;
+    background-color: #333;
+    opacity:0.8;
+    z-index: 200;
+}
+
+.selActions span {
+    color: white;
+}
+
+.navbar .brand {
+  float: left;
+  display: block;
+  // Vertically center the text given $navbarHeight
+  color: $navbarBrandColor;
+  text-shadow: 0 1px 0 $navbarBackgroundHighlight;
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+  margin:0px;
+  padding: 0;
+}
+
+.navbar .brand .link{
+  float: left;
+  margin-left: 10px;
+  margin-right: 20px;
+  // Vertically center the text given $navbarHeight
+  // padding: (($navbarHeight - $baseLineHeight) / 2) 20px (($navbarHeight - $baseLineHeight) / 2);
+  padding: 10px 0px 10px 0px;
+  font-size: 25px;
+  font-weight: 200;
+  color: #0071c5;
+  font-family: serif;
+  text-shadow: 0 1px 0 $navbarBackgroundHighlight;
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+}
+
+.navbar .brand .logo{
+  float: left;
+  height: 30px;
+  padding-top: 5px;
+  margin-left: 5px;
+}
+
+.navbar .bookmark {
+  float: right;
+  margin-right: 10px;
+}
+
+.navbar .search {
+  float: right;
+  width: 350px;
+  margin-right: 10px;
+}
+
+.nav-stacked ul {
+    opacity:1;
+}
+
+.nav-stacked a {
+    background-color: #111;
+}
+
+.code-search {
+    margin: 5px 0 0;
+}
+
+.code {
+  fill: #f00;
+  fill-opacity: .5;
+}
+
+.code_big {
+  fill: #f00;
+  fill-opacity: .2;
+}
+
+.code_area {
+  fill: #f00;
+  fill-opacity: .1;
+}
+
+sat-graph {
+    background-color: $white;
+    display: block;
+}
+
+.traceinfo {
+  position: fixed;
+  background-color: white;
+  border: #49afcd 2px solid;
+  min-width: 400px;
+  left: 100px;
+  padding: 10px;
+  padding-top: 5px;
+}
+
+.sat-header-container {
+  margin-top: 5px;
+  .time-title {
+    clear: both;
+    text-transform: capitalize;
+    font-weight: 200;
+    color: #999;
+  }
+  .time {
+    font-size: 1.4em;
+    font-weight: 200;
+    color: #5C5C5C;
+    margin-right: 5px;
+  }
+  .time {
+    font-size: 1.4em;
+    font-weight: 200;
+    color: #5C5C5C;
+    margin-right: 5px;
+  }
+  .right-margin {
+    margin-right: 5px;
+  }
+}
+
+$satBtnBackground:                     darken($white, 20%) !default;
+$satBtnBackgroundHighlight:            darken($white, 40%) !default;
+
+.group-break {
+  display: inline-block;
+  height: 20px;
+  .mask {
+    border-left: rgba(183,183,183,0.3) 1px solid;
+    height: 20px;
+    width: 5px;
+    margin-left: 5px;
+    margin-top: 5px;
+  }
+}
+
+.header-container {
+    border-bottom: 1px $borderColor solid;
+
+    .toggle-buttons {
+      margin-top: 3px;
+    }
+    .btn:focus {
+      outline: none;
+      color: $linkColorHover;
+      text-decoration: none;
+      background-color: transparent;
+    }
+    .btn-mini {
+      @include buttonBackground($satBtnBackground, $satBtnBackgroundHighlight);
+    }
+    .selected {
+      @include buttonBackground($btnInfoBackground, $btnInfoBackgroundHighlight);
+    }
+    .selected:active {
+      @include buttonBackground($btnInfoBackground, $btnInfoBackgroundHighlight);
+    }
+
+}
+
+.no-link {
+  color: #0088cc;
+  text-decoration: none;
+}
+.no-link:hover {
+  color: #0088cc;
+  text-decoration: underline;
+}
+
+.upload .progress {
+  width: 66px;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  margin-right: 5px;
+  margin-left: 0;
+}
+
+.graph-fixed {
+    position: fixed;
+    right: 0;
+    left: 0;
+    z-index: 300;
+    margin-bottom: 0;
+}
+
+.graph-container {
+  border-bottom: 1px solid $borderColor;
+  padding-bottom: 2px;
+}
+
+.process {
+    float: left;
+    display: inline-block;
+    color: $white;
+    padding: 2px 4px;
+    line-height: 12px;
+    font-size: $fontSizeSmall;
+    font-family: "Lucida Console", Monaco, monospace;
+    //font-weight: bold;
+    vertical-align: baseline;
+    white-space: nowrap;
+    @include border-radius(3px);
+}
+
+// Hover state, but only for links
+
+.process:hover {
+    color: $black;
+    text-decoration: none;
+    cursor: pointer;
+    text-shadow: none;
+}
+
+.threadinfo {
+  font-size: $fontSizeMini;
+  font-family: "Lucida Console", Monaco, monospace;
+  color: $black;
+  background-color: $white;
+  background-color: white;
+  border: #49afcd 2px solid;
+  position: fixed;
+  padding-left: 5px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-right: 5px;
+  z-index: 1000;
+  ul {
+    margin-left: 0px;
+    list-style: none;
+    margin-bottom: 0px;
+  }
+}
+
+.high {
+  font-weight: bold;
+}
+
+insflow {
+    background-color: $white;
+    display: block;
+}
+
+.call-stack {
+  margin-top: 10px;
+  margin-left: 5px !important;
+  //border:1px solid gray;
+  width: 7.7% !important;
+  font-size: 10px;
+  li {
+    line-height: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .selected a {
+    font-weight:bold;
+  }
+  .wide-call-stack {
+    position: fixed !important;
+    width: 300px;
+    z-index:2000;
+    background-color: #fff;
+    right: 0px;
+    font-size: 12px;
+    padding-left: 5px;
+    border-left: 1px dotted #aaa;
+  }
+}
+
+
+// TABLE BACKGROUNDS
+// -----------------
+// Exact selectors below required to override .table-striped
+
+.table tbody tr {
+/*  &.c td {
+    background-color: $errorBackground;
+  }*/
+  &.r td, &.rx td  {
+    background-color: $successBackground;
+  }
+  &.e td {
+    background-color: $white;
+  }
+  &.m td {
+    background-color: $blue;
+  }
+}
+
+// Hover states for .table-hover
+.table-hover tbody tr {
+
+  &.c:hover td {
+    background-color: darken($errorBackground, 5%);
+  }
+  &.r:hover td {
+    background-color: darken($successBackground, 5%);
+  }
+  &.m:hover td {
+    background-color: darken($blue, 5%);
+  }
+/*
+  &.e:hover td {
+    background-color: darken($white, 5%);
+  }
+*/
+}
+
+select, input[type="file"] {
+  height: 30px;
+  line-height: 30px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+stats {
+    background-color: $white;
+    display: block;
+}
+
+table.stats {
+  max-width: 100%;
+  background-color: $tableBackground;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+table.insflow {
+  max-width: 100%;
+  background-color: $tableBackground;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.table-striped.stats tbody > tr:nth-child(odd) > td, .table-striped tbody > tr:nth-child(odd) > th {
+    background-color: #E7F1FF;
+}
+
+.table-striped.stats tbody > tr:nth-child(odd):hover > td, .table-striped.stats tbody > tr:nth-child(odd):hover > th {
+    background-color: darken( #E7F1FF, 5% );
+}
+
+.table-hover.stats tbody tr:hover > td, .table-hover.stats tbody tr:hover > th {
+  background-color: whitesmoke;
+}
+
+.table.stats {
+  width: 100%;
+  margin-bottom: $baseLineHeight;
+  font-size: 85%; // Ex: 14px base font * 85% = about 12px
+
+  // Cells
+  th,
+  td {
+    padding: 0px;
+    padding-left: 5px;
+    line-height: $baseLineHeight;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid $satTableBorder;
+  }
+  th {
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .aright {
+    text-align: right;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .acenter {
+    text-align: center;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: white;
+  }
+}
+
+// BASELINE STYLES
+// ---------------
+
+.table.insflow {
+  width: 100%;
+  margin-bottom: $baseLineHeight;
+  font-size: 85%; // Ex: 14px base font * 85% = about 12px
+
+  // Cells
+  th, td {
+    padding: 0px;
+    padding-left: 5px;
+    line-height: 15px;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid $satTableBorder;
+  }
+  th {
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .aright {
+    text-align: right;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .acenter {
+    text-align: center;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: white;
+  }
+  .symbol-name {
+    font-size:$fontSizeMini;
+    font-family: "Lucida Console", Monaco, monospace;
+  }
+
+}
+
+//   Search HIT
+// --------------
+.search_hits {
+
+}
+.search_hit {
+  stroke: #f00;
+  stroke-opacity: 0.3;
+  shape-rendering: crispedges;
+}
+
+// Menu Items active
+.dropdown-menu > li > a.active {
+  text-decoration: none;
+  color: $dropdownLinkColorHover;
+  @include gradient-vertical($dropdownLinkBackgroundHover, lighten($dropdownLinkBackgroundHover, 10%));
+}
+
+//   Overflow HIT
+// --------------
+.overflow_hits {
+
+}
+.overflow_hit {
+  stroke: #00cf00;
+  stroke-opacity: 0.4;
+  shape-rendering: crispedges;
+}
+
+//   Lost HIT
+// --------------
+.lost_hits {
+
+}
+.lost_hit {
+  stroke: #000;
+  stroke-opacity: 0.2;
+  shape-rendering: crispedges;
+}
+
+// CBR
+// --------------
+.cbr {
+  .acbr {
+    stroke: red;
+    color: red;
+  }
+  .ecbr {
+    stroke: blue;
+    color: blue;
+  }
+}
+
+// SortColumns
+// ------------
+.sort-true {
+     background:no-repeat right center url(data:image/gif;base64,R0lGODlhCgAKALMAAHFxcYKCgp2dnaampq+vr83NzeHh4f///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAAAgAIf/8SUNDUkdCRzEwMTIAAAUwYXBwbAIgAABtbnRyUkdCIFhZWiAH2QACABkACwAaAAthY3NwQVBQTAAAAABhcHBsAAAAAAAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLWFwcGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtkc2NtAAABCAAAAvJkZXNjAAAD/AAAAG9nWFlaAAAEbAAAABR3dHB0AAAEgAAAABRyWFlaAAAElAAAABRiWFlaAAAEqAAAABRyVFJDAAAEvAAAAA5jcHJ0AAAEzAAAADhjaGFkAAAFBAAAACxn/1RSQwAABLwAAAAOYlRSQwAABLwAAAAObWx1YwAAAAAAAAARAAAADGVuVVMAAAAmAAACfmVzRVMAAAAmAAABgmRhREsAAAAuAAAB6mRlREUAAAAsAAABqGZpRkkAAAAoAAAA3GZyRlUAAAAoAAABKml0SVQAAAAoAAACVm5sTkwAAAAoAAACGG5iTk8AAAAmAAABBHB0QlIAAAAmAAABgnN2U0UAAAAmAAABBGphSlAAAAAaAAABUmtvS1IAAAAWAAACQHpoVFcAAAAWAAABbHpoQ04AAAAWAAAB1HJ1UlUAAAAiAAACpHBsUEwAAAAsAAACxgBZAGwAZQBpAG4AZf8AbgAgAFIARwBCAC0AcAByAG8AZgBpAGkAbABpAEcAZQBuAGUAcgBpAHMAawAgAFIARwBCAC0AcAByAG8AZgBpAGwAUAByAG8AZgBpAGwAIABHAOkAbgDpAHIAaQBxAHUAZQAgAFIAVgBCTgCCLAAgAFIARwBCACAw1zDtMNUwoTCkMOuQGnUoACAAUgBHAEIAIIJyX2ljz4/wAFAAZQByAGYAaQBsACAAUgBHAEIAIABHAGUAbgDpAHIAaQBjAG8AQQBsAGwAZwBlAG0AZQBpAG4AZQBzACAAUgBHAEIALQBQAHIAbwBmAGkAbGZukBoAIABSAEcAQgAgY8+P8GX/h072AEcAZQBuAGUAcgBlAGwAIABSAEcAQgAtAGIAZQBzAGsAcgBpAHYAZQBsAHMAZQBBAGwAZwBlAG0AZQBlAG4AIABSAEcAQgAtAHAAcgBvAGYAaQBlAGzHfLwYACAAUgBHAEIAINUEuFzTDMd8AFAAcgBvAGYAaQBsAG8AIABSAEcAQgAgAEcAZQBuAGUAcgBpAGMAbwBHAGUAbgBlAHIAaQBjACAAUgBHAEIAIABQAHIAbwBmAGkAbABlBB4EMQRJBDgEOQAgBD8EQAQ+BEQEOAQ7BEwAIABSAEcAQgBVAG4AaQB3AGUAcgBzAGEAbABuAHkAIABwAHIAbwBm/wBpAGwAIABSAEcAQgAAZGVzYwAAAAAAAAAUR2VuZXJpYyBSR0IgUHJvZmlsZQAAAAAAAAAAAAAAFEdlbmVyaWMgUkdCIFByb2ZpbGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhZWiAAAAAAAABadQAArHMAABc0WFlaIAAAAAAAAPNSAAEAAAABFs9YWVogAAAAAAAAdE0AAD3uAAAD0FhZWiAAAAAAAAAoGgAAFZ8AALg2Y3VydgAAAAAAAAABAc0AAHRleHQAAAAAQ29weXJpZ2h0IDIwMDcgQXBwbGUgSW5jLkMsIGFsbCByaWdodHMgcmVzZXJ2ZWQuAHNmMzIAAAAAAAEMQgAABd7///MmAAAHkgAA/ZH///ui///9owAAA9wAAMBsACwAAAAACgAKAAAEJZAMIcakQZjNtyhFxwEIIRofAookUnapu26t+6KFLYe1TgQ5VwQAOw%3D%3D);
+}
+.sort-false {
+    background:no-repeat right center url(data:image/gif;base64,R0lGODlhCgAKALMAAHFxcYKCgp2dnaampq+vr83NzeHh4f///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAAAgAIf/8SUNDUkdCRzEwMTIAAAUwYXBwbAIgAABtbnRyUkdCIFhZWiAH2QACABkACwAaAAthY3NwQVBQTAAAAABhcHBsAAAAAAAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLWFwcGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtkc2NtAAABCAAAAvJkZXNjAAAD/AAAAG9nWFlaAAAEbAAAABR3dHB0AAAEgAAAABRyWFlaAAAElAAAABRiWFlaAAAEqAAAABRyVFJDAAAEvAAAAA5jcHJ0AAAEzAAAADhjaGFkAAAFBAAAACxn/1RSQwAABLwAAAAOYlRSQwAABLwAAAAObWx1YwAAAAAAAAARAAAADGVuVVMAAAAmAAACfmVzRVMAAAAmAAABgmRhREsAAAAuAAAB6mRlREUAAAAsAAABqGZpRkkAAAAoAAAA3GZyRlUAAAAoAAABKml0SVQAAAAoAAACVm5sTkwAAAAoAAACGG5iTk8AAAAmAAABBHB0QlIAAAAmAAABgnN2U0UAAAAmAAABBGphSlAAAAAaAAABUmtvS1IAAAAWAAACQHpoVFcAAAAWAAABbHpoQ04AAAAWAAAB1HJ1UlUAAAAiAAACpHBsUEwAAAAsAAACxgBZAGwAZQBpAG4AZf8AbgAgAFIARwBCAC0AcAByAG8AZgBpAGkAbABpAEcAZQBuAGUAcgBpAHMAawAgAFIARwBCAC0AcAByAG8AZgBpAGwAUAByAG8AZgBpAGwAIABHAOkAbgDpAHIAaQBxAHUAZQAgAFIAVgBCTgCCLAAgAFIARwBCACAw1zDtMNUwoTCkMOuQGnUoACAAUgBHAEIAIIJyX2ljz4/wAFAAZQByAGYAaQBsACAAUgBHAEIAIABHAGUAbgDpAHIAaQBjAG8AQQBsAGwAZwBlAG0AZQBpAG4AZQBzACAAUgBHAEIALQBQAHIAbwBmAGkAbGZukBoAIABSAEcAQgAgY8+P8GX/h072AEcAZQBuAGUAcgBlAGwAIABSAEcAQgAtAGIAZQBzAGsAcgBpAHYAZQBsAHMAZQBBAGwAZwBlAG0AZQBlAG4AIABSAEcAQgAtAHAAcgBvAGYAaQBlAGzHfLwYACAAUgBHAEIAINUEuFzTDMd8AFAAcgBvAGYAaQBsAG8AIABSAEcAQgAgAEcAZQBuAGUAcgBpAGMAbwBHAGUAbgBlAHIAaQBjACAAUgBHAEIAIABQAHIAbwBmAGkAbABlBB4EMQRJBDgEOQAgBD8EQAQ+BEQEOAQ7BEwAIABSAEcAQgBVAG4AaQB3AGUAcgBzAGEAbABuAHkAIABwAHIAbwBm/wBpAGwAIABSAEcAQgAAZGVzYwAAAAAAAAAUR2VuZXJpYyBSR0IgUHJvZmlsZQAAAAAAAAAAAAAAFEdlbmVyaWMgUkdCIFByb2ZpbGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhZWiAAAAAAAABadQAArHMAABc0WFlaIAAAAAAAAPNSAAEAAAABFs9YWVogAAAAAAAAdE0AAD3uAAAD0FhZWiAAAAAAAAAoGgAAFZ8AALg2Y3VydgAAAAAAAAABAc0AAHRleHQAAAAAQ29weXJpZ2h0IDIwMDcgQXBwbGUgSW5jLkMsIGFsbCByaWdodHMgcmVzZXJ2ZWQuAHNmMzIAAAAAAAEMQgAABd7///MmAAAHkgAA/ZH///ui///9owAAA9wAAMBsACwAAAAACgAKAAAEJRBJREKZsxQDsCSGIVzZFnYTGIqktp7fG46uzAn2TAyCMPC9QAQAOw%3D%3D);
+}

@@ -1,0 +1,5 @@
+.*.swp
+.sconsign.dblite
+32-bit
+64-bit
+sat-post-processor-binaries.tgz

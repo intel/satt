@@ -1,0 +1,139 @@
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Import(['env', 'srcdirs', 'libdirs', 'installdir'])
+
+localenv = env.Clone()
+
+localenv.components = [
+                        'common',
+                        'sideband-parser',
+                        'rtit-parser',
+                        'disassembler'
+                      ]
+
+localenv.component_srcdirs = [ srcdirs[x] for x in localenv.components ]
+localenv.component_libdirs = [ libdirs[x] for x in localenv.components ]
+
+localenv.component_srcdirs = localenv.component_srcdirs + ['#../../kernel-module']
+localenv.Append(CPPPATH = localenv.component_srcdirs)
+
+localenv.Program('sat-rtit-collection-model',
+                 ['sat-task-model.cpp',
+                  'sat-rtit-collection.cpp',
+                  'sat-rtit-task.cpp',
+                  'sat-sideband-model.cpp',
+                  'sat-scheduling-heuristics.cpp',
+                  'sat-rtit-file.cpp',
+                  'sat-rtit-instruction.cpp',
+                  'sat-symbol-table-file.cpp',
+                  'sat-system-map.cpp',
+                  'sat-call-stack.cpp',
+                  'sat-tid.cpp',
+                  'sat-demangle.cpp',
+                  'sat-caching-path-mapper.cpp',
+                  'sat-helper-path-mapper.cpp',
+                  'sat-filesystem.cpp'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler',
+                          'capstone'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program(['sat-dump-scheduling-heuristics.cpp',
+                  'sat-sideband-model.o',
+                  'sat-scheduling-heuristics.o',
+                  'sat-tid.o'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program(['sat-rtit-collection-cbr.cpp',
+                  'sat-rtit-collection.o',
+                  'sat-rtit-task.o',
+                  'sat-rtit-file.o',
+                  'sat-sideband-model.o',
+                  'sat-tid.o',
+                  'sat-scheduling-heuristics.o'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program(['sat-rtit-collection-stats.cpp',
+                  'sat-rtit-collection.o',
+                  'sat-rtit-task.o',
+                  'sat-rtit-file.o',
+                  'sat-sideband-model.o',
+                  'sat-tid.o',
+                  'sat-scheduling-heuristics.o'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program(['sat-rtit-collection-tsc.cpp',
+                  'sat-rtit-collection.o',
+                  'sat-rtit-task.o',
+                  'sat-rtit-file.o',
+                  'sat-sideband-model.o',
+                  'sat-tid.o',
+                  'sat-scheduling-heuristics.o'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program('sat-rtit-collection-tasks',
+                 ['sat-rtit-collection-list.cpp',
+                  'sat-rtit-collection.o',
+                  'sat-rtit-task.o',
+                  'sat-rtit-file.o',
+                  'sat-sideband-model.o',
+                  'sat-tid.o',
+                  'sat-scheduling-heuristics.o'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program(['sat-rtit-collection-make.cpp',
+                  'sat-rtit-collection.o',
+                  'sat-rtit-task.o',
+                  'sat-rtit-file.o',
+                  'sat-sideband-model.o',
+                  'sat-tid.o',
+                  'sat-scheduling-heuristics.o'],
+                  LIBS = ['sat-common',
+                          'sat-sideband-parser',
+                          'sat-rtit-parser',
+                          'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Program(['sat-path-map.cpp',
+                  'sat-local-path-mapper.cpp',
+                  'sat-filesystem.o'],
+                  LIBS = ['sat-common', 'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+localenv.Install(installdir, [
+                               'sat-rtit-collection-cbr',
+                               'sat-rtit-collection-make',
+                               'sat-rtit-collection-model',
+                               'sat-rtit-collection-stats',
+                               'sat-rtit-collection-tasks',
+                               'sat-rtit-collection-tsc',
+                               'sat-dump-scheduling-heuristics',
+                               'sat-path-map'
+                             ])

@@ -1,0 +1,4 @@
+*.swp
+.sconsign.dblite
+*.o
+*.a

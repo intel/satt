@@ -1,0 +1,14 @@
+builds
+envsetup
+conf/config.env
+src/parser/udis86-master
+documents/docs
+src/parser/post-processor/bin/x86_64/
+src/parser/post-processor/bin/x86/
+src/parser/post-processor/build/
+satt/process/bin/x86_64/
+satt/process/bin/x86/
+satt/process/bin/sat-*
+bin/env
+*.pyc
+*.png
