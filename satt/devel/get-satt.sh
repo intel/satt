@@ -60,33 +60,6 @@ esac
 shift # past argument or value
 done
 
-# Configure git for easier workflow
-function configure_gerrit {
-    echo "Configure git for gerrit workflow"
-    URL=$SATT_GIT_URL_PREFIX$SATT_GIT_URL:$SATT_GIT_PORT/$SATT_GIT_PROJECT
-    if [ -z "$SATT_GIT_PORT" ]; then
-        URL=$SATT_GIT_URL_PREFIX$SATT_GIT_URL/$SATT_GIT_PROJECT
-    fi
-    echo "[remote \"for-release\"]
-    url = $URL
-    push = HEAD:refs/for/master" >> .git/config
-
-    if [ -z "$SATT_GIT_PORT" ]; then
-        scp -p $SATT_GIT_URL:hooks/commit-msg .git/hooks/
-    else
-        scp -p -P $SATT_GIT_PORT $SATT_GIT_URL:hooks/commit-msg .git/hooks/
-    fi
-
-    # Limit change id generation to only master branch
-    sed -i s/add_ChangeId$// .git/hooks/commit-msg
-
-    echo 'BRANCH=`git symbolic-ref --short HEAD`
-if [ "$BRANCH" = "master" ]; then
-    add_ChangeId
-fi' >> .git/hooks/commit-msg
-
-}
-
 function check_capstone {
 if [ ! -d "$SAT_HOME/src/parser/capstone-master" ] ; then
 	deploy_capstone
@@ -145,7 +118,7 @@ function check_git {
 	then
 		echo >&2 ""
 		echo >&2 "**************************************************************"
-		echo >&2 "*** SAT Deployment Failed"
+		echo >&2 "*** SATT Deployment Failed"
 		echo >&2 "*** "
 	    echo >&2 "*** git clone failed with exit status $ret"
 	    echo >&2 "*** Perhaps you do not have access rights to secure Git?"
@@ -187,7 +160,7 @@ function check_scons {
 	then
 		echo >&2 ""
 		echo >&2 "**************************************************************"
-		echo >&2 "*** SAT Deployment Failed"
+		echo >&2 "*** SATT Deployment Failed"
 		echo >&2 "*** "
 	    echo >&2 "*** scons building failed with exit status $ret"
 	    echo >&2 "**************************************************************"
@@ -203,9 +176,9 @@ for i in $DEPS ; do
     if [ $? != 0 ] ; then
         echo ""
 		echo "**************************************************************"
-		echo "*** SAT Deployment Failed"
+		echo "*** SATT Deployment Failed"
 		echo "*** "
-        echo "*** These packages are needed for building SAT-tool: "
+        echo "*** These packages are needed for building SATT-tool: "
 		echo "*** apt-get install scons libdisasm-dev libelf-dev python-pip git build-essential"
 		echo "**************************************************************"
 		exit 1
@@ -237,7 +210,7 @@ fi
 
 echo ""
 echo "**************************************************************"
-echo "*** SAT Install / Upgrade Failed"
+echo "*** SATT Install / Upgrade Failed"
 echo "*** "
 echo "*** Try clearing directory totally and run deploy-sat.sh again"
 echo "**************************************************************"
@@ -258,7 +231,7 @@ if [ "$upgrade" == "0" ]; then
 
 echo "**************************************************************"
 echo "***"
-echo "*** Do you want to install SAT-tool in to current folder?"
+echo "*** Do you want to install SATT-tool in to current folder?"
 echo "***"
 echo "*** Installation folder = $PWD"
 echo "***"
@@ -269,7 +242,7 @@ echo "**************************************************************"
 read -s -n 1 dummy_input
 
 echo "**************************************************************"
-echo "***         Check out SAT-tool first time"
+echo "***         Check out SATT-tool first time"
 echo "**************************************************************"
 
 # Remove deploy-sat.sh only from current directory
@@ -294,8 +267,6 @@ if [ -n "$SAT_VERSION" ]; then
     git checkout "$SAT_VERSION"
 fi
 
-configure_gerrit
-
 #check_udis86
 check_capstone
 
@@ -311,7 +282,7 @@ fi # if [ "$upgrade" == "0" ]; then
 # Upgrade to latest
 if [ "$upgrade" == "1" ]; then
 echo "**************************************************************"
-echo "***         Update SAT-tool to latest"
+echo "***         Update SATT-tool to latest"
 echo "**************************************************************"
 
 #check_udis86
@@ -326,7 +297,7 @@ fi
 fi
 
 echo "**************************************************************"
-echo "**** Building SAT-parser"
+echo "**** Building SATT-parser"
 echo "**************************************************************"
 pushd .
 cd src/parser/post-processor
@@ -344,7 +315,7 @@ if [ "$upgrade" == "0" ]; then
 echo ""
 echo "**************************************************************"
 echo "***"
-echo "*** To use SAT you need to source SAT environment by:"
+echo "*** To use SATT you need to source SATT environment by:"
 echo "***"
 echo "*** #> satt config"
 echo "***"
@@ -362,24 +333,24 @@ echo "*** Launching GUI only    #> satt visualize"
 echo "***"
 echo "**************************************************************"
 echo "***"
-echo "*** If you are using your own builds, manual steps to build SAT-kernel module are needed"
+echo "*** If you are using your own builds, manual steps to build SATT-kernel module are needed"
 echo "***"
 echo "*** Setup environment         #> satt config"
-echo "*** Build sat kernel module   #> satt build"
+echo "*** Build satt kernel module   #> satt build"
 echo "***"
 echo "**************************************************************"
 else
 echo "**************************************************************"
 echo "***"
 if [ -n "$SAT_VERSION" ]; then
-    echo "*** SAT-tool updated to $SAT_VERSION release"
+    echo "*** SATT-tool updated to $SAT_VERSION release"
 else
-    echo "*** SAT-tool updated to latest release"
+    echo "*** SATT-tool updated to latest release"
 fi
 echo "***"
 echo "**************************************************************"
 echo "***"
-echo "*** If you are using your own builds, manual steps to build SAT-kernel module are needed"
+echo "*** If you are using your own builds, manual steps to build SATT-kernel module are needed"
 echo "***"
 echo "*** Setup environment         #> satt config"
 echo "*** Build sat kernel module   #> satt build"
