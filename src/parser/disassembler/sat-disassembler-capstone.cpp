@@ -87,9 +87,7 @@ bool disassembled_instruction::parse(const disassembler::impl* i, uint16_t* size
                     has_jump_target_ = get_jump_target(i, jump_target_);
                     break;
                 case CS_GRP_JUMP:
-                    if (i->insn_->id >= X86_INS_JAE &&
-                        i->insn_->id <= X86_INS_JS  &&
-                        i->insn_->id != X86_INS_JMP &&
+                    if (i->insn_->id != X86_INS_JMP &&
                         i->insn_->id != X86_INS_LJMP)
                     {
                         type_        = CONDITIONAL;
