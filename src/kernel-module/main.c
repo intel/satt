@@ -1133,18 +1133,45 @@ static int __hijack_syscalls(void *unused)
 	return 0;
 }
 
+#ifdef __i386__
+#define ADDR_TYPE_CAST_PREFIX (uint64_t)(uint32_t)
+#else
+#define ADDR_TYPE_CAST_PREFIX (uint64_t)
+#endif
 static void send_kernel_codedump_info(void)
 {
 	struct kernsym _text_sym;
+	struct kernsym _stext_sym;
 	struct kernsym _end_sym;
+	int status_text;
+	int status_stext;
+	uint64_t addr;
 
-	if (!IN_ERR(find_symbol_address(&_text_sym, "_text")) || !IN_ERR(find_symbol_address(&_text_sym, "_stext")))
+	_text_sym.addr = 0;
+	_stext_sym.addr = 0;
+	status_text = find_symbol_address(&_text_sym, "_text");
+	status_stext = find_symbol_address(&_stext_sym, "_stext");
+
+	if (!IN_ERR(status_text) || !IN_ERR(status_stext))
 		if (!IN_ERR(find_symbol_address(&_end_sym, "_etext")))
-#ifdef __i386__
-			send_codedump((uint64_t)(uint32_t)_text_sym.addr, (uint64_t)(uint32_t) (_end_sym.addr - _text_sym.addr), "vmlinux");
-#else
-            send_codedump((uint64_t) _text_sym.addr, (uint64_t) (_end_sym.addr - _text_sym.addr), "vmlinux");
-#endif
+		{
+			if (_text_sym.addr > 0 && _stext_sym.addr > 0)
+			{
+				if (_text_sym.addr < _stext_sym.addr)
+					addr = ADDR_TYPE_CAST_PREFIX _text_sym.addr;
+				else
+					addr = ADDR_TYPE_CAST_PREFIX _stext_sym.addr;
+			} else if (_text_sym.addr > 0)
+				addr = ADDR_TYPE_CAST_PREFIX _text_sym.addr;
+			else
+				addr = ADDR_TYPE_CAST_PREFIX _stext_sym.addr;
+			// Align address to match vmlinux start
+			addr = addr & 0xffffffffffff0000;
+			send_codedump(addr, ((ADDR_TYPE_CAST_PREFIX _end_sym.addr) - addr), "vmlinux");
+		} else
+			printk("SAT: WARNING: NO _etext symbol found!!!\n");
+	else
+		printk("SAT: WARNING: NO _text or _stext symbol found!!!\n");
 }
 
 static void send_module_list(void)
