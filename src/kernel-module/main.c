@@ -1184,7 +1184,7 @@ static void send_module_list(void)
 
 // TODO: Add module size also into module message.
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 5)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
 		/* Skip dummy modules */
 		if (!mod->name || !mod->core_layout.base)
 			continue;
