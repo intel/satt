@@ -202,6 +202,8 @@ struct context
     bool        pending_output_call_;
     function<bool(rva& target)> resolve_relocation_callback;
     uint32_t    exec_loop_count_;
+    uint32_t    exec_loop_tnts_;
+    uint64_t    exec_loop_ipt_location_;
     // fast-forward mode is enabled when we start processing new block and we execute
     //  from previous "return compression reset" point (PSB, PGE or OVF) to the real
     //  block starting point (basically scheduler_tip packet). No intermediate info

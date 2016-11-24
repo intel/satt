@@ -575,8 +575,19 @@ private:
                  ++context_.exec_loop_count_;
                  if (non_terminating_loop_threshold < context_.exec_loop_count_) {
                      // Printing non-terminating loop warning only as debug print
-                     SAT_LOG(1, "@ ! iPOSSIBLE NON-TERMINATING LOOP DETECTED\n");
-                     context_.exec_loop_count_ = 0;
+                     //SAT_LOG(1, "@ ! iPOSSIBLE NON-TERMINATING LOOP DETECTED\n");
+                     if (context_.tnts_.size() == context_.exec_loop_tnts_ &&
+                         input_.beginning_of_packet() == context_.exec_loop_ipt_location_)
+                     {
+                         SAT_LOG(0, "@ ! iNON-TERMINATING LOOP DETECTED: %s\n", ii->symbol().c_str());
+                         cerr << "\rNON-TERMINATING LOOP DETECTED: " << ii->symbol() << "                                      " << endl;
+                         sleep(1);
+                         context_.get_lost();
+                     } else {
+                        context_.exec_loop_count_ = 0;
+                        context_.exec_loop_tnts_ = context_.tnts_.size();
+                        context_.exec_loop_ipt_location_ = input_.beginning_of_packet();
+                     }
                  }
                  // TODO How to detect not-terminating loop preoperly???
                  #if 0
@@ -585,6 +596,8 @@ private:
                  #endif
              } else {
                  context_.exec_loop_count_ = 0;
+                 //context_.exec_loop_tnts_ = context_.tnts_.size();
+                 //context_.exec_loop_ipt_location_ = input_.beginning_of_packet();
              }
              delete ii; // TODO: consider caching
 
