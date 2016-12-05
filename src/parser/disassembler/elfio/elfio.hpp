@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <vector>
 #include <deque>
+#include <iterator>
 #include <typeinfo>
 
 #include <elfio/elf_types.hpp>
@@ -73,7 +74,8 @@ class elfio
 //------------------------------------------------------------------------------
     elfio() : sections( this ), segments( this )
     {
-        header      = 0;
+        header           = 0;
+        current_file_pos = 0;
         create( ELFCLASS32, ELFDATA2LSB );
     }
 
@@ -344,6 +346,7 @@ class elfio
         set_section_name_str_index( 1 );
         section* shstrtab = sections.add( ".shstrtab" );
         shstrtab->set_type( SHT_STRTAB );
+        shstrtab->set_addr_align( 1 );
     }
 
 //------------------------------------------------------------------------------
@@ -571,7 +574,6 @@ class elfio
     {
         std::vector<segment*>  worklist;
         std::vector<bool>      section_generated(sections.size(),false);
-        std::vector<Elf_Xword> section_alignment(sections.size(),0);
 
         // Get segments in a order in where segments which contain a
         // sub sequence of other segments are located at the end
@@ -640,8 +642,12 @@ class elfio
                 else if (!section_generated[index]) {
                     // If no address has been specified then only the section
                     // alignment constraint has to be matched
-                    Elf64_Off error = current_file_pos % sec->get_addr_align();
-                    secAlign = ( sec->get_addr_align() - error ) % sec->get_addr_align();
+					Elf_Xword align = sec->get_addr_align();
+					if (align == 0) {
+						align = 1;
+					}
+                    Elf64_Off error = current_file_pos % align;
+                    secAlign = ( align - error ) % align;
                 }
                 else {
                     // Alignment for already generated sections
