@@ -17,6 +17,7 @@
 #include "sat-oat.h"
 #include "sat-log.h"
 #include "sat-elfio-hack.h"
+#include <capstone/capstone.h>
 #include <elfio/elfio.hpp>
 #include <elfio/elf_types.hpp>
 #include <iostream>
@@ -429,6 +430,9 @@ public:
         rva    /*offset*/> global_function_cache_;
     map<rva    /*offset*/,
         string /*name*/>   relocation_cache_;
+    map<rva    /*offset*/,
+        string /*name*/>   got_relocation_cache_;
+
 }; // class mmapped::impl
 
 
@@ -439,11 +443,11 @@ public:
         mmapped::impl(path, sym_path)
     {}
 
-    void fill_object_cache() override
-    {
-        //istream mmapped_file(&streambuf_);
-        istream mmapped_file(sym_streambuf_);
+private:
+    void fill_object_cache_relocs() {
+        istream mmapped_file(&streambuf_);
         elfio   elf;
+
         if (!elf.load(mmapped_file)) {
             // TODO
         } else {
@@ -474,50 +478,15 @@ public:
                              s->get_flags());
             }
 
-            // read functions
-            for (i = 0; i < elf.sections.size(); ++i) {
-                section* sec = elf.sections[i];
-                if (sec->get_type() == SHT_SYMTAB ||
-                    sec->get_type() == SHT_DYNSYM)
-                {
-                    const symbol_section_accessor symbols(elf, sec);
-                    for (unsigned s = 0; s < symbols.get_symbols_num(); ++s) {
-                        string        name;
-                        Elf64_Addr    value = 0;
-                        Elf_Xword     size  = 0;
-                        unsigned char bind  = 0;
-                        unsigned char type  = STT_NOTYPE;
-                        Elf_Half      section_index;
-                        unsigned char other;
-                        symbols.get_symbol(s,
-                                           name,
-                                           value,
-                                           size,
-                                           bind,
-                                           type,
-                                           section_index,
-                                           other);
-                        if ((type == STT_FUNC || type == STT_NOTYPE) &&
-                            (name != "") && (section_index > 0 && section_index < elf.sections.size()))
-                        {
-                            auto offset = value - default_load_address_;
-                            //printf("func: %8.8lx (%8.8lx) si:%x %s\n", offset, size, section_index, name.c_str());
-                            objects_.add(sections, offset, size, name);
-                            if (bind == STB_GLOBAL) {
-                                global_function_cache_[name] = offset;
-                            }
-                        }
-                    }
-                }
-            }
-
             // read plts
             const section* plt_section = elf.sections[".plt"];
             if (plt_section) {
                 rva plt_address = plt_section->get_address();
                 section* relplt_section;
-                if ((relplt_section = elf.sections[".rel.plt"]) ||
-                    (relplt_section = elf.sections[".rela.plt"]))
+                if (((relplt_section = elf.sections[".rel.plt"]) ||
+                    (relplt_section = elf.sections[".rela.plt"])) &&
+                    (plt_section->get_type() == SHT_RELA ||
+                     plt_section->get_type() == SHT_REL))
                 {
                     relocation_section_accessor plts(elf, relplt_section);
                     for (unsigned r = 0; r < plts.get_entries_num(); ++r) {
@@ -548,8 +517,12 @@ public:
             }
 
             // read relocation entries
-            section* rel_section = elf.sections[".rel.dyn"];
-            if (rel_section) {
+            section* rel_section;
+            if (((rel_section = elf.sections[".rel.dyn"]) ||
+                (rel_section = elf.sections[".rela.dyn"])) &&
+                (rel_section->get_type() == SHT_RELA ||
+                 rel_section->get_type() == SHT_REL))
+            {
                 relocation_section_accessor rels(elf, rel_section);
                 for (unsigned r = 0; r < rels.get_entries_num(); ++r) {
                     Elf64_Addr offset = 0;
@@ -567,16 +540,156 @@ public:
                                        calc))
                     {
                         if (type == R_386_PC32) {
-                            cout << "relocation: " << name << " " << hex << offset << endl;
+                            SAT_LOG(1, "relocation: %lx %s \n", offset, name.c_str());
                             relocation_cache_[offset] = name;
+                        }
+                        else if (type == R_386_GLOB_DAT) {
+                            SAT_LOG(1, "got-relocation: %lx %s %lx \n", offset, name.c_str(), value);
+                            got_relocation_cache_[offset] = name;
+                        }
+                    }
+                }
+            }
+
+            // read plt got
+            const section* got_section = elf.sections[".plt.got"];
+            if (got_section) {
+                rva got_sec_address = got_section->get_address();
+                size_t got_sec_size = got_section->get_size();
+                Elf64_Off got_sec_offset = sat::get_elfio_section_offset(got_section);
+
+                rva got_map_offset;
+                unsigned char *load_address;
+                bool host_map;
+                size_t      s;
+                const void* p;
+
+                host_map = streambuf_.get(p, s);
+
+                if (!host_map)
+                    printf("ERROR .plt.got no host_map found?\n");
+                else {
+                    load_address = (unsigned char*)p;
+
+                    cs_x86      *x86;
+                    cs_insn     *insn;
+                    cs_mode     mode;
+                    csh         handle;
+
+                    switch (bits_) {
+                        case 16:
+                            mode = CS_MODE_16;
+                            break;
+                        case 32:
+                            mode = CS_MODE_32;
+                            break;
+                        case 64:
+                        default:
+                            mode = CS_MODE_64;
+                    }
+                    if (cs_open(CS_ARCH_X86, mode, &handle) == CS_ERR_OK) {
+                        cs_option(handle, CS_OPT_SYNTAX, CS_OPT_SYNTAX_ATT);
+                        cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
+                        insn = cs_malloc(handle);
+
+                        rva* address = (rva*)&got_sec_address;
+                        const unsigned char* code = load_address + got_sec_offset;   // pointer to the actual code
+
+                        while(cs_disasm_iter(handle, &code, &got_sec_size, address, insn)) {
+                            if (insn->id == X86_INS_JMP) {
+                                if (insn->detail == NULL)
+                                    continue;
+                                x86 = &(insn->detail->x86);
+
+                                got_map_offset = x86->disp + insn->address + insn->size;
+
+                                const auto& r = got_relocation_cache_.find(got_map_offset);
+                                if (r != got_relocation_cache_.end()) {
+                                    objects_.add(sections,
+                                                insn->address,
+                                                8,
+                                                r->second + "@plt");
+                                }
+                            }
+                        }
+                        cs_free(insn, 1);
+                        cs_close(&handle);
+                    }
+                }
+            }
+        }
+    }
+
+    void fill_object_cache_symbols() {
+        istream sym_mmapped_file(sym_streambuf_);
+        elfio   sym_elf;
+
+        if (!sym_elf.load(sym_mmapped_file)) {
+            // TODO
+        } else {
+            bits_ = sym_elf.get_class() == ELFCLASS32 ? 32 : 64;
+
+            // read sections
+            section_cache sections;
+            int i;
+            for (i = 0; i < sym_elf.sections.size(); ++i) {
+                const section* s = sym_elf.sections[i];
+                /* Use object default_load_address_ and not from the symbol file */
+                sections.add(s->get_address() - default_load_address_,
+                             s->get_address(),
+                             s->get_size(),
+                             s->get_name(),
+                             s->get_flags());
+            }
+
+            // read functions
+            for (i = 0; i < sym_elf.sections.size(); ++i) {
+                section* sec = sym_elf.sections[i];
+                if (sec->get_type() == SHT_SYMTAB ||
+                    sec->get_type() == SHT_DYNSYM)
+                {
+                    const symbol_section_accessor symbols(sym_elf, sec);
+                    for (unsigned s = 0; s < symbols.get_symbols_num(); ++s) {
+                        string        name;
+                        Elf64_Addr    value = 0;
+                        Elf_Xword     size  = 0;
+                        unsigned char bind  = 0;
+                        unsigned char type  = STT_NOTYPE;
+                        Elf_Half      section_index;
+                        unsigned char other;
+                        symbols.get_symbol(s,
+                                           name,
+                                           value,
+                                           size,
+                                           bind,
+                                           type,
+                                           section_index,
+                                           other);
+                        if ((type == STT_FUNC || type == STT_NOTYPE) &&
+                            (name != "") &&
+                            (section_index > 0 && section_index < sym_elf.sections.size()))
+                        {
+                            /* We need to use object default_load_address_ and not the debug version one */
+                            auto offset = value - default_load_address_;
+                            //printf("func: %8.8lx (%8.8lx) si:%x %s\n", offset, size, section_index, name.c_str());
+                            objects_.add(sections, offset, size, name);
+                            if (bind == STB_GLOBAL) {
+                                global_function_cache_[name] = offset;
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+public:
+    void fill_object_cache() override
+    {
+        fill_object_cache_relocs();
+        fill_object_cache_symbols();
 
         objects_.fix_sizes();
-
         object_cache_filled_ = true;
     }
 

@@ -154,6 +154,7 @@ class relocation_section_accessor
         unsigned char other;
 
         symbol_section_accessor symbols( elf_file, elf_file.sections[get_symbol_table_index()] );
+
         ret = ret && symbols.get_symbol( symbol, symbolName, symbolValue,
                                          size, bind, symbolType, section, other );
 

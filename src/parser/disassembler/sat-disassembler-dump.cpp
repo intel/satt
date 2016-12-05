@@ -15,7 +15,7 @@
 */
 #include "sat-mmapped.h"
 #include "sat-disassembler.h"
-
+#include "sat-log.h"
 #include <elf.h>
 #include <cstdio>
 #include <cstdlib>
@@ -95,6 +95,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
         goto fail;
     }
+
+    global_debug_level = 1;
 
 #if 0
     bfd_init();

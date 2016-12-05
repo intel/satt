@@ -16,6 +16,7 @@
 #if 1
 #include "sat-demangle.h"
 #include "sat-elfio-hack.h"
+#include <capstone/capstone.h>
 #include <elfio/elfio.hpp>
 #include <elfio/elf_types.hpp>
 #include <iostream>
@@ -461,8 +462,10 @@ public:
                                            section_index,
                                            other);
                         if ((type == STT_FUNC || type == STT_NOTYPE) &&
-                            value > 0)
-                            //&& value > default_load_address_)
+                            (name != "") &&
+                            (section_index > 0 && section_index < elf.sections.size()))
+/*                            value > 0)
+                            && value > default_load_address_)*/
                         {
                             auto offset = value - default_load_address_;
                             cout << offset << " " << name << endl;
@@ -481,8 +484,10 @@ public:
                 rva plt_address = plt_section->get_address();
                 section* relplt_section;
                 if ((relplt_section = elf.sections[".rel.plt"]) ||
-                    (relplt_section = elf.sections[".rela.plt"]))
+                    (relplt_section = elf.sections[".rela.plt"])
+                    )
                 {
+
                     relocation_section_accessor plts(elf, relplt_section);
                     for (unsigned r = 0; r < plts.get_entries_num(); ++r) {
                         Elf64_Addr offset = 0;
@@ -512,8 +517,9 @@ public:
             }
 
             // read relocation entries
-            section* rel_section = elf.sections[".rel.dyn"];
-            if (rel_section) {
+            section* rel_section;
+            if ((rel_section = elf.sections[".rel.dyn"]) ||
+                (rel_section = elf.sections[".rela.dyn"])) {
                 relocation_section_accessor rels(elf, rel_section);
                 for (unsigned r = 0; r < rels.get_entries_num(); ++r) {
                     Elf64_Addr offset = 0;
@@ -531,12 +537,87 @@ public:
                                        calc))
                     {
                         if (type == R_386_PC32) {
-                            cout << "relocation: " << name << " " << hex << offset << endl;
+                            cout << "relocation: " << hex << type << " " << name << " " << hex << offset << endl;
                             relocation_cache_[offset] = name;
+                        }
+                        if (type == R_386_GLOB_DAT) {
+                            cout << "got-relocation: " << hex << offset << " " << name << " " << hex << value << " " << hex << addend << " " << hex << calc << endl;
+                            got_relocation_cache_[offset] = {value, name};
                         }
                     }
                 }
             }
+
+            // read plt got
+            const section* got_section = elf.sections[".plt.got"];
+            if (got_section) {
+                rva got_address = got_section->get_address();
+                size_t got_section_size = got_section->get_size();
+                Elf64_Off got_sec_offset = sat::get_elfio_section_offset(got_section);
+
+                rva got_map_offset;
+                unsigned char *load_address;
+                bool host_map;
+                size_t      s;
+                const void* p;
+                host_map = streambuf_.get(p, s);
+
+                if (!host_map)
+                    printf("ERROR .plt.got no host_map found?\n");
+                else {
+                    load_address = (unsigned char*)p;
+                    printf("got.plt.got sections, addr(0x%lx) host_map(%d)\n", got_address, host_map);
+
+                    cs_x86 *x86;
+                    cs_insn     *insn;                // capstone instruction storage
+                    cs_mode     mode;
+                    csh     handle;
+                    switch (bits_) {
+                        case 16:
+                            mode = CS_MODE_16;
+                            break;
+                        case 32:
+                            mode = CS_MODE_32;
+                            break;
+                        case 64:
+                        default:
+                            mode = CS_MODE_64;
+                    }
+                    if (cs_open(CS_ARCH_X86, mode, &handle) == CS_ERR_OK) {
+                        cs_option(handle, CS_OPT_SYNTAX, CS_OPT_SYNTAX_ATT);
+                        cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
+                        insn = cs_malloc(handle);
+
+                        rva* address = (rva*)&got_address;
+                        const unsigned char* code = load_address + got_sec_offset;   // pointer to the actual code
+
+                        while(cs_disasm_iter(handle, &code, &got_section_size, address, insn)) {
+                            if (insn->id == X86_INS_JMP)
+                            {
+                                // Detail can be NULL on "data"
+                                if (insn->detail == NULL)
+                                    continue;
+                                x86 = &(insn->detail->x86);
+
+                                // TODO can we get next address easily and not +6 ?
+                                got_map_offset = x86->disp + insn->address + 6; // + 6 is the start of the next address (rip)
+
+                                const auto& r = got_relocation_cache_.find(got_map_offset);
+                                if (r != got_relocation_cache_.end()) {
+                                    objects_.add(sections,
+                                                insn->address,
+                                                8,
+                                                r->second.name + "@got");
+                                }
+                            }
+                        }
+                        cs_free(insn, 1);
+                        cs_close(&handle);
+                    }
+
+                }
+            }
+
         }
 
         objects_.fix_sizes();
@@ -553,6 +634,10 @@ public:
         rva    /*offset*/> global_function_cache_;
     map<rva    /*offset*/,
         string /*name*/>   relocation_cache_;
+
+    typedef struct got_plt { rva address; string name;} got_plt;
+    map<rva    /*offset*/,
+        got_plt>   got_relocation_cache_;
 };
 
 

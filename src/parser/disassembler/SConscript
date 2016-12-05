@@ -33,12 +33,12 @@ localenv.StaticLibrary('sat-disassembler',
                         'sat-oat-header.cpp',
                         'sat-demangle.cpp',
                         'sat-elfio-hack.cpp'],
-                       LIBS = ['sat-common'],
+                       LIBS = ['sat-common', 'capstone'],
                        LIBPATH = component_libdirs)
 
 localenv.Program(['sat-symbol-dump.cpp'],
                  LIBS=['sat-disassembler',
-                       'sat-common'],
+                       'sat-common', 'capstone'],
                  LIBPATH=component_libdirs)
 localenv.Program(['sat-disassembler-dump.cpp'],
                  LIBS=['sat-disassembler',
@@ -49,8 +49,9 @@ localenv.Program(['sat-disassembler-dump.cpp'],
                        'dl'],
                  LIBPATH=component_libdirs)
 localenv.Program(['sat-elf-dump.cpp'],
-            LIBS=['sat-disassembler', 'sat-common'],
+            LIBS=['sat-disassembler', 'sat-common', 'capstone'],
             LIBPATH=component_libdirs)
+
 localenv.Install(installdir, [
                                'sat-symbol-dump',
                                'sat-disassembler-dump',
