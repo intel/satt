@@ -485,8 +485,8 @@ private:
                 section* relplt_section;
                 if (((relplt_section = elf.sections[".rel.plt"]) ||
                     (relplt_section = elf.sections[".rela.plt"])) &&
-                    (plt_section->get_type() == SHT_RELA ||
-                     plt_section->get_type() == SHT_REL))
+                    (relplt_section->get_type() == SHT_RELA ||
+                     relplt_section->get_type() == SHT_REL))
                 {
                     relocation_section_accessor plts(elf, relplt_section);
                     for (unsigned r = 0; r < plts.get_entries_num(); ++r) {

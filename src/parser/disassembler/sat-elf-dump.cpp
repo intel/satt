@@ -483,9 +483,10 @@ public:
             if (plt_section) {
                 rva plt_address = plt_section->get_address();
                 section* relplt_section;
-                if ((relplt_section = elf.sections[".rel.plt"]) ||
-                    (relplt_section = elf.sections[".rela.plt"])
-                    )
+                if (((relplt_section = elf.sections[".rel.plt"]) ||
+                    (relplt_section = elf.sections[".rela.plt"])) &&
+                    (relplt_section->get_type() == SHT_RELA ||
+                     relplt_section->get_type() == SHT_REL))
                 {
 
                     relocation_section_accessor plts(elf, relplt_section);
@@ -518,8 +519,10 @@ public:
 
             // read relocation entries
             section* rel_section;
-            if ((rel_section = elf.sections[".rel.dyn"]) ||
-                (rel_section = elf.sections[".rela.dyn"])) {
+            if (((rel_section = elf.sections[".rel.dyn"]) ||
+                (rel_section = elf.sections[".rela.dyn"])) &&
+                (rel_section->get_type() == SHT_RELA ||
+                 rel_section->get_type() == SHT_REL)) {
                 relocation_section_accessor rels(elf, rel_section);
                 for (unsigned r = 0; r < rels.get_entries_num(); ++r) {
                     Elf64_Addr offset = 0;
