@@ -74,6 +74,19 @@ class AndroidOs(TargetOs):
         self.debug_print("AndroidOS::get_name")
         return 'Android'
 
+    def copy_binaries(self):
+        self.debug_print("AndroidOS::copy_binaries")
+        # Create symlink for symbols and system dirs if not exists
+        target_build_path = envstore.store.get_variable('sat_target_build')
+        if os.path.lexists(os.path.join(self._trace_path, 'binaries', 'symbols')):
+            os.remove(os.path.join(self._trace_path, 'binaries', 'symbols'))
+        os.symlink(os.path.join(target_build_path, 'symbols'),
+                   os.path.join(self._trace_path, 'binaries', 'symbols'))
+        if os.path.lexists(os.path.join(self._trace_path, 'binaries', 'system')):
+            os.remove(os.path.join(self._trace_path, 'binaries', 'system'))
+        os.symlink(os.path.join(target_build_path, 'system'),
+                   os.path.join(self._trace_path, 'binaries', 'system'))
+
     # Methods for CONFIG
     # ##################
     def config(self, variables):

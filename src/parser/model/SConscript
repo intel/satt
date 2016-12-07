@@ -45,7 +45,7 @@ localenv.Program('sat-rtit-collection-model',
                   'sat-demangle.cpp',
                   'sat-caching-path-mapper.cpp',
                   'sat-helper-path-mapper.cpp',
-                  'sat-filesystem.cpp'],
+                  '../common/sat-filesystem.o'],
                   LIBS = ['sat-common',
                           'sat-sideband-parser',
                           'sat-rtit-parser',
@@ -128,11 +128,7 @@ localenv.Program(['sat-rtit-collection-make.cpp',
                           'sat-disassembler',
                           'capstone'],
                   LIBPATH = localenv.component_libdirs)
-localenv.Program(['sat-path-map.cpp',
-                  'sat-local-path-mapper.cpp',
-                  'sat-filesystem.o'],
-                  LIBS = ['sat-common', 'sat-disassembler'],
-                  LIBPATH = localenv.component_libdirs)
+
 localenv.Install(installdir, [
                                'sat-rtit-collection-cbr',
                                'sat-rtit-collection-make',
@@ -140,6 +136,6 @@ localenv.Install(installdir, [
                                'sat-rtit-collection-stats',
                                'sat-rtit-collection-tasks',
                                'sat-rtit-collection-tsc',
-                               'sat-dump-scheduling-heuristics',
-                               'sat-path-map'
+                               'sat-dump-scheduling-heuristics'
+
                              ])

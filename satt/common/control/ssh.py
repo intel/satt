@@ -59,17 +59,18 @@ class SshControl(Control):
                                stderr=subprocess.PIPE,
                                shell=False)
         res = ssh.stdout.readlines()
-        return res
+        return self._normalize_shell_output(res)
 
     def get_remote_file(self, copy_from, copy_to):
         self._check_ip_address()
         self._debug_print("SshControl::get_remote_file")
-        # TODO
-        # scp = subprocess.Popen([self._scp_command, "%s" % self._ip_address, copy_from, copy_to],
-        #                        stdout=subprocess.PIPE,
-        #                        stderr=subprocess.PIPE,
-        #                        shell=False)
-        # res = scp.stdout.readlines()
+
+        p = subprocess.Popen([self._ssh_command, "%s" % (self._ip_address,), "cat %s" % (copy_from,)],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE,
+                              shell=False)
+        res = p.stdout.read()
+        open(copy_to, "wb").write(res)
         return 0
 
     def push_local_file(self, copy_from, copy_to):

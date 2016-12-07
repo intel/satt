@@ -15,7 +15,7 @@
 */
 #include "sat-local-path-mapper.h"
 #include "sat-filesystem.h"
-#include "sat-elf.h"
+//#include "sat-elf.h"
 #include "sat-log.h"
 #include <map>
 #include <algorithm>

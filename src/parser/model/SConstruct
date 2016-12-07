@@ -18,7 +18,7 @@ import commands
 flags = ARGUMENTS.get('flags', '-O3') + ' '
 
 env = Environment(CCFLAGS   = flags + '-std=c++0x -Wall',
-                  CPPPATH   = ['../../common/src',
+                  CPPPATH   = ['../common',
                                '../../sideband-parser/src',
                                '../../../kernel-module',
                                '../../rtit-parser/src',
@@ -34,7 +34,7 @@ env.Program(['sat-rtit-model.cpp',
              'sat-tid.cpp',
              'sat-demangle.cpp',
              'sat-path-mapper.cpp'
-             'sat-filesystem.cpp'],
+             'sat-filesystem.o'],
              LIBS = ['sat-common',
                      'sat-sideband-parser',
                      'sat-rtit-parser',

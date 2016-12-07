@@ -29,7 +29,7 @@ from satt.common import envstore
 from satt.common.targetos.targetos import TargetOs
 
 
-class LinuxOs(TargetOs):
+class OstroOs(TargetOs):
     """ Linux specific impl
     """
 
@@ -42,22 +42,55 @@ class LinuxOs(TargetOs):
 # ####################################
     def get_os_data(self, trace_path):
         TargetOs.get_os_data(self, trace_path)
-        self.debug_print("LinuxOs::get_os_data")
+        self.debug_print("OstroOs::get_os_data")
         self._get_build_info()
 
     def get_vmlinux_path(self):
-        self.debug_print("LinuxOs::get_vmlinux_path")
-        kern_ver = self._control.shell_command('uname -r').strip()
-        return '/boot/vmlinuz-' + kern_ver
+        self.debug_print("OstroOs::get_vmlinux_path")
+        module_path = envstore.store.get_variable('sat_path_modules')
+        if os.path.lexists(module_path):
+            return os.path.join(module_path, 'vmlinux')
+        else:
+            print "Error: Incorrect module path, check configuration!"
+            sys.exit(-1)
 
     def get_system_map_path(self):
-        self.debug_print("LinuxOs::get_system_map_path")
-        kern_ver = platform.release()
-        return '/boot/System.map-' + kern_ver
+        self.debug_print("OstroOs::get_system_map_path")
+        module_path = envstore.store.get_variable('sat_path_modules')
+        if os.path.lexists(module_path):
+            return os.path.join(module_path, 'System.map')
+        else:
+            print "Error: Incorrect module path, check configuration!"
+            sys.exit(-1)
 
     def get_name(self):
-        self.debug_print("LinuxOs::get_name")
-        return 'Linux'
+        self.debug_print("OstroOs::get_name")
+        return 'Ostro'
+
+    def copy_binaries(self):
+        ''' extract ipk debug packages into sysroot folder
+        '''
+        self.debug_print("OstroOs::copy_binaries")
+        target_build_path = envstore.store.get_variable('sat_target_build')
+        if os.path.lexists(os.path.join(self._trace_path, 'binaries', 'system')):
+            os.remove(os.path.join(self._trace_path, 'binaries', 'system'))
+        os.symlink(target_build_path, os.path.join(self._trace_path, 'binaries', 'system'))
+
+        # Hacked for Joule
+        # /builds/Joule/build/tmp-glibc/sysroots/intel-corei7-64
+        # TODO: Use md5 to check whether ipk is already unpacked, so no need to do duplicate work.
+        target_ipk_path = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), 'deploy', 'ipk', 'corei7-64')
+        dbg_ipk_hash_list = []
+        ipks = os.walk(target_ipk_path).next()[2]
+        for ipk in ipks:
+            if "-dbg" in ipk:
+                os.system('dpkg -x ' + os.path.join(target_ipk_path, ipk) + ' ' + target_build_path)
+
+    def get_debug_paths(self):
+        #Return path where debug ipks were extracted (see copy_binaries)
+        target_build_path = envstore.store.get_variable('sat_target_build')
+        target_debug_build_path = os.path.join(target_build_path, 'usr', 'lib', '.debug')
+        return target_debug_build_path
 
     # Methods for CONFIG
     # ##################
@@ -65,6 +98,7 @@ class LinuxOs(TargetOs):
         variables['sat_target_source'] = ''
         variables['sat_target_build'] = '/'
         self._set_sat_kernel_paths(variables)
+        self._set_sat_target_paths(variables)
 
     def _set_sat_kernel_paths(self, variables):
         variables['sat_path_kernel'] = ""
@@ -98,9 +132,13 @@ class LinuxOs(TargetOs):
             variables['sat_path_kernel_src'] = variables['sat_path_kernel_src'].rstrip()
         print
 
-    def get_debug_paths(self):
-        #TODO return right paths, debug-cache path also?
-        return "/usr/lib/debug"
+    def _set_sat_target_paths(self, variables):
+        print helper.color.BOLD + 'Select target paths:' + helper.color.END
+        selection = raw_input("   Use target build path: '" + variables['sat_target_build'] + "' ? [Y/n] ")
+        if selection == 'n' or selection == 'N':
+            variables['sat_target_build'] = raw_input('   Give another target build path: ')
+            variables['sat_target_build'] = variables['sat_target_build'].rstrip()
+        print
 
 # ####################################
 # Private methods

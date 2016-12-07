@@ -15,30 +15,91 @@
 '''
 
 import os
+import re
 import sys
 import time
 import argparse
 import subprocess
+import pickle
 # from satt.common import envstore
 # from satt.common.control import AdbControl
 # from satt.common.control import SshControl
 # from satt.common.control import ShellControl
 
+SATT_PATH = os.path.split(os.path.split(os.path.dirname(os.path.realpath(__file__)))[0])[0]
+SATT_CONTROL_BUS = None
+SATT_SSH_IP = None
+SATT_OS = None
+
+def load_config():
+    global SATT_CONTROL_BUS
+    global SATT_SSH_IP
+    global SATT_OS
+    conf_path = os.path.join(SATT_PATH, 'conf', 'config.env')
+    if os.path.exists(conf_path):
+        configs = pickle.load(open(conf_path, 'rb'))
+        variables = configs[0]
+        SATT_CONTROL_BUS = variables['sat_control_bus']
+        SATT_SSH_IP = variables['sat_control_ip']
+        SATT_OS = variables['sat_os']
+
+def check_for_debug_symbols(filename):
+    symbol_file = None
+    ret_val = subprocess.check_output("nm -gC " + filename, stderr=subprocess.STDOUT, shell=True)
+    line = ''
+    if ret_val is not None and ret_val != "":
+        line = ret_val.splitlines()[0]
+
+    if "no symbols" in line:
+        ret_val = subprocess.check_output("readelf -n " + filename, stderr=subprocess.STDOUT, shell=True)
+        match = re.search("Build ID: (\w\w)(\w+)", ret_val)
+        if match:
+            debug_path_elems = filename.split(os.sep)
+            if len(debug_path_elems) > 2:
+                symbol_file = os.path.join(os.sep, debug_path_elems[1], debug_path_elems[2],
+                                           'debug', '.build-id', match.group(1),
+                                           match.group(2) + '.debug')
+    else:
+        pass
+
+    if symbol_file and os.path.exists(symbol_file):
+        return True, symbol_file
+    else:
+        return False, None
+
+def get_build_id(filename):
+    ret_val = subprocess.check_output("readelf -n " + filename, stderr=subprocess.STDOUT, shell=True)
+    match = re.search("Build ID: (\w+)", ret_val)
+    if match:
+        return match.group(1)
+    return None
+
+#Check that object and symbols build id match
+def check_if_build_id_match(symbol, debug):
+    symbol_bid = get_build_id(symbol)
+    debug_bid = get_build_id(debug)
+    return symbol_bid == debug_bid
 
 def main():
     adb = None
+    response = None
+    debug = None
 
-    try:
-        pyadb = __import__('pyadb')
-        adb = pyadb.ADB('adb')
-    except:
-        adb = None
+    load_config()
+
+    if SATT_CONTROL_BUS == 'ADB':
+        try:
+            pyadb = __import__('pyadb')
+            adb = pyadb.ADB('adb')
+        except:
+            adb = None
 
     parser = argparse.ArgumentParser(description='binary server')
     parser.add_argument('NEEDLE', help='file to find')
     parser.add_argument('-p', '--path_mapper', help='Path to sat-path-map binary', required=False)
     parser.add_argument('-k', '--kernel',  help='Path to kernel (vmlinux)', required=False)
     parser.add_argument('-m', '--modules', help='Path to kernel modules',   required=False)
+    parser.add_argument('-d', '--debug', help='Debug symbols paths, ; separeted string',   required=False)
     parser.add_argument('HAYSTACKS', nargs='+', help='search path')
     args = parser.parse_args()
 
@@ -46,22 +107,48 @@ def main():
     file_cache = args.HAYSTACKS[-1]
 
     if os.path.exists(args.NEEDLE):
-        print args.NEEDLE.rstrip()
-        return
+        response = args.NEEDLE.rstrip()
 
     # Use first sat-path-map tool to search host side haystacks
-    if args.path_mapper:
+    elif args.path_mapper:
         sat_path_map_cmd = args.path_mapper + ' "' + args.NEEDLE + '" -k ' + args.kernel + ' -m ' + args.modules
         for hs in args.HAYSTACKS:
             sat_path_map_cmd += ' ' + hs
-            response = subprocess.check_output(sat_path_map_cmd, shell=True)
+        response = subprocess.check_output(sat_path_map_cmd, shell=True)
+        if response:
+            split = response.split(';')
+            response = split[0].rstrip()
+            if len(split) > 1:
+                debug = split[0].rstrip()
     else:
         response = ''
 
     if response:
-        print response.rstrip()
+        # Search by build id (Ubuntu style)
+        if SATT_OS == 0: # Linux
+            status, debug = check_for_debug_symbols(response)
+
+        # Check if debug symbols found by name in given paths
+        if (SATT_OS == 3 or (SATT_OS == 0 and not debug)): #and args.debug:
+            sat_path_map_cmd = args.path_mapper + ' "' + args.NEEDLE + '" -k ' + args.kernel + ' -m ' + args.modules
+            for hs in args.debug.split(';'):
+               sat_path_map_cmd += ' ' + hs
+            debug = subprocess.check_output(sat_path_map_cmd, shell=True)
+
+        if SATT_OS == 1 or SATT_OS == 2: # Chrome OS or Android
+            debug = None
+
+        # Check that build id matches with symbol and debug
+        if debug and not check_if_build_id_match(response, debug):
+            debug = None
+
+        if debug:
+            print response + ";" + debug.rstrip()
+        else:
+            print response + ";" + response
         return
-    elif (adb is not None):
+
+    elif ( SATT_CONTROL_BUS == 'ADB' and adb is not None):
         # Try to get binary from target device
         if not adb.check_path():
             return

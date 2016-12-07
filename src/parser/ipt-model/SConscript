@@ -108,12 +108,12 @@ localenv.Program(['sat-ipt-collection-tasks.cpp',
                           'sat-disassembler',
                           'capstone'],
                   LIBPATH = localenv.component_libdirs)
+
 localenv.Install(installdir, [
                                'sat-ipt-collection-make',
                                'sat-ipt-model',
                                'sat-ipt-scheduling-heuristics-dump',
                                'sat-ipt-collection-cbr',
                                'sat-ipt-collection-stats',
-                               'sat-ipt-collection-tasks',
+                               'sat-ipt-collection-tasks'
                              ])
-

@@ -45,6 +45,9 @@ def get_instance():
             elif os == OsHelper.ChromeOS:
                 from satt.common.targetos.os_chromeos import ChromeOs
                 os_instance = ChromeOs()
+            elif os == OsHelper.OstroOS:
+                from satt.common.targetos.os_ostro import OstroOs
+                os_instance = OstroOs()
             else:
                 print "ERROR: Unsupported target OS type (" + os + ")"
                 sys.exit(-1)
@@ -63,15 +66,11 @@ class OsData:
 
 
 class OsHelper:
-    Linux, Android, ChromeOS = range(3)
-    osdata = {Linux: OsData('Linux', ['SHELL'], False),
+    Linux, Android, ChromeOS, OstroOS = range(4)
+    osdata = {Linux: OsData('Linux', ['SSH', 'SHELL'], False),
               Android: OsData('Android', ['ADB'], True),
-              ChromeOS: OsData('ChromeOS', ['SSH', 'SHELL'], False)}
-
-#    osdata = {Linux: OsData('Linux', ['SSH', 'SHELL'], False),
-#              Android: OsData('Android', ['ADB'], True),
-#              ChromeOS: OsData('ChromeOS', ['SSH', 'SHELL'], False)}
-
+              ChromeOS: OsData('ChromeOS', ['SSH', 'SHELL'], False),
+              OstroOS: OsData('OstroOS', ['SSH'], False)}
 
 class TargetOs(object):
     """ OS specific base class
@@ -117,8 +116,15 @@ class TargetOs(object):
             return True
         return False
 
+    def copy_binaries(self):
+        ''' Virtual function
+        '''
+
     def get_sat_module_paths(self):
         return self._sat_module_paths
+
+    def get_debug_paths(self):
+        return ""
 
     def debug_print(self, string):
         if self._debug:

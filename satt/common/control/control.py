@@ -59,6 +59,19 @@ class Control(object):
     def __init__(self, debug):
         self._debug = debug
 
+    # Convert input data to string
+    def _normalize_shell_output(self, data):
+        if data == None or data == '':
+            return ''
+        # is string
+        elif isinstance(data, basestring):
+            return data
+        # is iterable
+        elif isinstance(data, list):
+            return ''.join(data)
+        else:
+            print 'ERROR: unknown return value'
+
     def _debug_print(self, msg):
         if self._debug:
             print msg

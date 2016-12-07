@@ -13,7 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Import('env')
+Import(['env', 'srcdirs', 'libdirs', 'installdir'])
 
-env.StaticLibrary('sat-common',
+localenv = env.Clone()
+
+localenv.components = ['ipt-parser', 'common', 'sideband-parser', 'disassembler']
+
+localenv.component_srcdirs = [ srcdirs[x] for x in localenv.components ]
+localenv.component_libdirs = [ libdirs[x] for x in localenv.components ]
+
+
+localenv.StaticLibrary('sat-common',
                   ['sat-log.cpp', 'sat-getline.cpp', 'sat-md5.cpp', 'md5.c'])
+
+localenv.Program(['sat-path-map.cpp',
+                  'sat-local-path-mapper.cpp',
+                  'sat-filesystem.cpp'],
+                  LIBS = ['sat-common', 'sat-disassembler'],
+                  LIBPATH = localenv.component_libdirs)
+
+localenv.Install(installdir, [
+                               'sat-path-map'
+                             ])

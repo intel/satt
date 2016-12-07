@@ -83,8 +83,9 @@ int main(int argc, char* argv[])
 
     if (found) {
         if (syms == "") {
-            syms = result;
+            cout << result << endl;
+        } else {
+            cout << result << ";" << syms << endl;
         }
-        cout << result << ";" << syms << endl;
     }
 }

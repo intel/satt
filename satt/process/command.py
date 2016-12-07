@@ -54,7 +54,6 @@ def intermediate_work(params):
 
 class SattProcess:
     _bin_path = ''
-    _trace_path = ''
     _trace_folder_path = ''
     _post_process_bin_path = ''
     _official_build = False
@@ -69,13 +68,13 @@ class SattProcess:
         self._satt_venv_bin = envstore.store.get_sat_venv_bin()
         self._post_process_bin_path = os.path.join(self._sat_home, 'satt', 'process', 'bin')
         self._variables = envstore.store.get_current()
-        self.ParseArguments()
         self._os = targetos.get_instance()
+        self.ParseArguments()
 
     # ===============================================#
     def action(self):
-        if not os.path.exists(self._trace_path):
-            print "ERROR: SATT trace '" + self._trace_path + "' not found!"
+        if not os.path.exists(self._os._trace_path):
+            print "ERROR: SATT trace '" + self._os._trace_path + "' not found!"
             return
 
         if self._args.rtit:
@@ -105,10 +104,10 @@ class SattProcess:
             self.DemangleSymbols()
             # Adding SatVersion into satstats requires changes into sat ui backend
             # self.SatVersionIntoSatstats()
-            subprocess.call(os.path.join(self._post_process_bin_path, 'post') + ' ' + self._trace_path + " | tee -a " +
-                            os.path.join(self._trace_path, self._trace_path + '-process.log'), shell=True)
-            subprocess.call(os.path.join(self._post_process_bin_path, 'pack') + ' ' + self._trace_path + " | tee -a " +
-                            os.path.join(self._trace_path, self._trace_path + '-process.log'), shell=True)
+            subprocess.call(os.path.join(self._post_process_bin_path, 'post') + ' ' + self._os._trace_path + " | tee -a " +
+                            os.path.join(self._os._trace_path, self._os._trace_path + '-process.log'), shell=True)
+            subprocess.call(os.path.join(self._post_process_bin_path, 'pack') + ' ' + self._os._trace_path + " | tee -a " +
+                            os.path.join(self._os._trace_path, self._os._trace_path + '-process.log'), shell=True)
         else:
             print "**************************************"
             print "**    Uups, Processing Failed       **"
@@ -131,110 +130,101 @@ class SattProcess:
         self._args = parser.parse_args()
         self._bin_path = os.path.join(self._sat_home, 'lib', 'post-process')
 
-        self._trace_path = self._args.TRACE_PATH
-        if self._trace_path[-1:] == "/" or self._trace_path[-1:] == "\\":
-            self._trace_path = self._trace_path[:-1]
+        self._os._trace_path = self._args.TRACE_PATH
+        if self._os._trace_path[-1:] == "/" or self._os._trace_path[-1:] == "\\":
+            self._os._trace_path = self._os._trace_path[:-1]
 
         # If called with absolute path
-        if os.path.isabs(self._trace_path):
+        if os.path.isabs(self._os._trace_path):
             savedPath = os.getcwd()
-            self._trace_folder_path = os.path.realpath(os.path.join(self._trace_path, '..'))
-            self._trace_path = os.path.basename(os.path.normpath(self._trace_path))
+            self._trace_folder_path = os.path.realpath(os.path.join(self._os._trace_path, '..'))
+            self._os._trace_path = os.path.basename(os.path.normpath(self._os._trace_path))
             os.chdir(self._trace_folder_path)
 
     # ===============================================#
     def RemoveHostFileCache(self):
-        if os.path.exists(os.path.join(self._trace_path, 'binaries', 'sat-path-cache', 'cache')):
-            os.remove(os.path.join(self._trace_path, 'binaries', 'sat-path-cache', 'cache'))
+        if os.path.exists(os.path.join(self._os._trace_path, 'binaries', 'sat-path-cache', 'cache')):
+            os.remove(os.path.join(self._os._trace_path, 'binaries', 'sat-path-cache', 'cache'))
 
     # ===============================================#
 
     def CopyBinariesToTraceFolder(self):
         kernel_path = envstore.store.get_variable('sat_path_kernel')
-        if not os.path.exists(os.path.join(self._trace_path, 'binaries', 'kernel')):
-            os.makedirs(os.path.join(self._trace_path, 'binaries', 'kernel'))
+        if not os.path.exists(os.path.join(self._os._trace_path, 'binaries', 'kernel')):
+            os.makedirs(os.path.join(self._os._trace_path, 'binaries', 'kernel'))
 
         # 32-bit
         if os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso32-sysenter.so.dbg')):
             shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso32-sysenter.so.dbg'),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
         elif os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso32-sysenter.so')):
             shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso32-sysenter.so'),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
         elif os.path.isfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso32.so')):
             shutil.copyfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso32.so'),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
 
         # 64-bit
         if os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso64.so.dbg')):
             shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso64.so.dbg'),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
         elif os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso64.so')):
             shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso64.so'),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
         elif os.path.isfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso64.so')):
             shutil.copyfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso64.so'),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
 
         if os.path.isfile(self._os.get_system_map_path()):
             shutil.copyfile(self._os.get_system_map_path(),
-                            os.path.join(self._trace_path, 'binaries', 'kernel', 'System.map'))
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'System.map'))
         # copy original vmlinux to trace/binaries folder
         if os.path.isfile(self._os.get_vmlinux_path()):
             #
             extract_vmlinux = os.path.join(kernel_path, 'scripts', 'extract-vmlinux')
             if os.path.isfile(extract_vmlinux):
                 subprocess.call(extract_vmlinux + ' ' + self._os.get_vmlinux_path() + " > " +
-                                os.path.join(self._trace_path, 'binaries', 'kernel', 'vmlinux_'), shell=True)
+                                os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vmlinux_'), shell=True)
             else:
                 shutil.copyfile(self._os.get_vmlinux_path(),
-                                os.path.join(self._trace_path, 'binaries', 'kernel', 'vmlinux_'))
+                                os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vmlinux_'))
         # create modules dir
-        if not os.path.exists(os.path.join(self._trace_path, 'binaries', 'kernel', 'modules')):
-            os.makedirs(os.path.join(self._trace_path, 'binaries', 'kernel', 'modules'))
+        if not os.path.exists(os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules')):
+            os.makedirs(os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules'))
         # copy original kmods to trace/binaries folder
         modules_path = envstore.store.get_variable('sat_path_modules')
         if os.path.exists(modules_path):
-            if self._os.is_os('Linux'):
+            if self._os.is_os('Linux') or self._os.is_os('Ostro'):
                 kmod_pattern = '*.ko'
                 for root, dirs, files in os.walk(modules_path):
                     for filename in fnmatch.filter(files, kmod_pattern):
-                        shutil.copyfile(os.path.join(root, filename), os.path.join(self._trace_path, 'binaries',
+                        shutil.copyfile(os.path.join(root, filename), os.path.join(self._os._trace_path, 'binaries',
                                         'kernel', 'modules', os.path.basename(filename)+'_'))
             else:
                 for f in glob.glob(os.path.join(modules_path, '*.ko')):
-                    shutil.copyfile(f, os.path.join(self._trace_path, 'binaries',
+                    shutil.copyfile(f, os.path.join(self._os._trace_path, 'binaries',
                                     'kernel', 'modules', os.path.basename(f)+'_'))
         # move&rename sat.ko from trace binaries folder to binaries/kernel/modules/sat.ko_
         if not self._official_build:
-            if not os.path.exists(os.path.join(self._trace_path, 'binaries', 'kernel', 'modules', 'sat.ko_')):
-                if os.path.exists(os.path.join(self._trace_path, 'binaries', 'sat.ko')):
-                    shutil.move(os.path.join(self._trace_path, 'binaries', 'sat.ko'),
-                                os.path.join(self._trace_path, 'binaries', 'kernel', 'modules'))
-                os.rename(os.path.join(self._trace_path, 'binaries', 'kernel', 'modules', 'sat.ko'),
-                          os.path.join(self._trace_path, 'binaries', 'kernel', 'modules', 'sat.ko_'))
+            if not os.path.exists(os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules', 'sat.ko_')):
+                if os.path.exists(os.path.join(self._os._trace_path, 'binaries', 'sat.ko')):
+                    shutil.move(os.path.join(self._os._trace_path, 'binaries', 'sat.ko'),
+                                os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules'))
+                os.rename(os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules', 'sat.ko'),
+                          os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules', 'sat.ko_'))
 
-        # Create symlink for symbols and system dirs if not exists
-        target_build_path = envstore.store.get_variable('sat_target_build')
-        if os.path.lexists(os.path.join(self._trace_path, 'binaries', 'symbols')):
-            os.remove(os.path.join(self._trace_path, 'binaries', 'symbols'))
-        os.symlink(os.path.join(target_build_path, 'symbols'),
-                   os.path.join(self._trace_path, 'binaries', 'symbols'))
-        if os.path.lexists(os.path.join(self._trace_path, 'binaries', 'system')):
-            os.remove(os.path.join(self._trace_path, 'binaries', 'system'))
-        os.symlink(os.path.join(target_build_path, 'system'),
-                   os.path.join(self._trace_path, 'binaries', 'system'))
+        self._os.copy_binaries()
 
     # ===============================================#
     def PatchKernelBinaries(self):
         if not self._args.patching_disable:
-            bp = BinaryPatch(self._variables['sat_target_build'], os.path.realpath(self._trace_path))
+            bp = BinaryPatch(self._variables['sat_target_build'], os.path.realpath(self._os._trace_path))
             retstr = bp.patchModules(self._official_build, NO_PATCHING_IF_ALREADY_PATCHED,
                                      IGNORE_SAT_MODULE_ON_PROCESSING)
             if retstr == "no_dump":
                 # dump files not found, perform linking
                 print "No dump files found, perform linking for modules"
-                lm = LinkModules(self._variables['sat_target_build'], os.path.realpath(self._trace_path))
+                lm = LinkModules(self._variables['sat_target_build'], os.path.realpath(self._os._trace_path))
                 lm.linkModules(self._official_build, IGNORE_SAT_MODULE_ON_PROCESSING)
 
     # ===============================================#
@@ -248,7 +238,7 @@ class SattProcess:
 
         sub_python = os.popen(python_path + ' ' + os.path.join(self._sat_home,
                               'satt', 'common', 'sbparser', 'sbdump.py') + ' -c < ' +
-                              os.path.join(self._trace_path, "sideband.bin"))
+                              os.path.join(self._os._trace_path, "sideband.bin"))
         if sub_python:
             while True:
                 line = sub_python.readline()
@@ -262,7 +252,7 @@ class SattProcess:
 
         if kernel_address > 0:
             # Adjust vma for vmlinux file
-            vmlinux_path = os.path.join(self._trace_path, 'binaries', 'kernel', 'vmlinux')
+            vmlinux_path = os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vmlinux')
             if os.path.exists(vmlinux_path):
                 data = subprocess.check_output(['objdump', '-h', vmlinux_path])
                 for line in data.splitlines():
@@ -273,7 +263,7 @@ class SattProcess:
                         subprocess.call(['objcopy', '--adjust-vma', str(offset), vmlinux_path])
 
             # Adjust vma for System.map file
-            systemmap_path = os.path.join(self._trace_path, 'binaries', 'kernel', 'System.map')
+            systemmap_path = os.path.join(self._os._trace_path, 'binaries', 'kernel', 'System.map')
             if os.path.exists(systemmap_path):
                 os.rename(systemmap_path, systemmap_path + '_')
                 offset = 0;
@@ -299,11 +289,11 @@ class SattProcess:
 
     # ===============================================#
     def DecodeRawPtiData(self):
-        if not os.path.isfile(os.path.join(self._trace_path, 'cpu0.bin')):
-            if os.path.isfile(os.path.join(self._trace_path, 'stma.raw')):
+        if not os.path.isfile(os.path.join(self._os._trace_path, 'cpu0.bin')):
+            if os.path.isfile(os.path.join(self._os._trace_path, 'stma.raw')):
                 print 'Decode cpu rtit streams from PTI stream'
                 savedPath_ = os.getcwd()
-                os.chdir(self._trace_path)
+                os.chdir(self._os._trace_path)
                 size_ = os.path.getsize('stma.raw')
                 subprocess.call(os.path.join(self._post_process_bin_path, 'sat-stp-dump') + ' -s ' + str(size_) +
                                 ' -m < stma.raw', shell=True)
@@ -315,7 +305,7 @@ class SattProcess:
         import multiprocessing
         max_procs = multiprocessing.cpu_count()
         command = ''
-        collection_file = os.path.join(self._trace_path, self._trace_path + '.collection')
+        collection_file = os.path.join(self._os._trace_path, self._os._trace_path + '.collection')
 
         # commands for rtit/ipt
         collection_make_version = ''
@@ -339,8 +329,8 @@ class SattProcess:
         print 'MAKING COLLECTION ' + collection_file
 
         command = (os.path.join(self._post_process_bin_path, collection_make_version) +
-                   ' -s ' + os.path.join(self._trace_path, 'sideband.bin'))
-        cpu_files = glob.glob(os.path.join(self._trace_path, 'cpu*.bin'))
+                   ' -s ' + os.path.join(self._os._trace_path, 'sideband.bin'))
+        cpu_files = glob.glob(os.path.join(self._os._trace_path, 'cpu*.bin'))
         cpu_files.sort()
         for i in cpu_files:
             command += ' -r ' + i
@@ -363,23 +353,26 @@ class SattProcess:
         path_helper = (python_path + " " +
                        os.path.join(self._sat_home, 'satt', 'process', 'binary_server.py') + " '%s' " +
                        "-p " + os.path.join(self._post_process_bin_path, 'sat-path-map') + " " +
-                       "-k " + os.path.join(self._trace_path, 'binaries', 'kernel', 'vmlinux') + " " +
-                       "-m " + os.path.join(self._trace_path, 'binaries', 'kernel', 'modules') + " " +
-                       os.path.join(self._trace_path, 'binaries', 'symbols') + " " +
-                       os.path.join(self._trace_path, 'binaries') + " " +
-                       os.path.join(self._trace_path, 'binaries', 'sat-path-cache'))
+                       "-k " + os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vmlinux') + " " +
+                       "-m " + os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules') + " ")
+
+        path_helper += "-d " + self._os.get_debug_paths() + " "
+
+        path_helper += (os.path.join(self._os._trace_path, 'binaries', 'symbols') + " " +
+                       os.path.join(self._os._trace_path, 'binaries') + " " +
+                       os.path.join(self._os._trace_path, 'binaries', 'sat-path-cache'))
 
         command = (os.path.join(self._post_process_bin_path, collection_model_version) +
                    ' -C ' + collection_file +
-                   ' -m ' + os.path.join(self._trace_path, 'binaries', 'kernel', 'System.map') +
+                   ' -m ' + os.path.join(self._os._trace_path, 'binaries', 'kernel', 'System.map') +
                    ' -f "' + path_helper + '"'
-                   ' -F ' + os.path.join(self._trace_path, 'binaries', 'sat-path-cache') +
+                   ' -F ' + os.path.join(self._os._trace_path, 'binaries', 'sat-path-cache') +
                    ' -P ' + str(max_procs) +
-                   ' -o ' + os.path.join(self._trace_path, self._trace_path + '-%u.model') +
-                   ' -w ' + os.path.join(self._trace_path, self._trace_path + '-%u.lwm') +
-                   ' -n ' + os.path.join(self._trace_path, self._trace_path + '.satsym') +
-                   ' -e ' + os.path.join(self._trace_path, self._trace_path + '.satmod') +
-                   ' -h ' + os.path.join(self._trace_path, self._trace_path + '.satmodh'))
+                   ' -o ' + os.path.join(self._os._trace_path, self._os._trace_path + '-%u.model') +
+                   ' -w ' + os.path.join(self._os._trace_path, self._os._trace_path + '-%u.lwm') +
+                   ' -n ' + os.path.join(self._os._trace_path, self._os._trace_path + '.satsym') +
+                   ' -e ' + os.path.join(self._os._trace_path, self._os._trace_path + '.satmod') +
+                   ' -h ' + os.path.join(self._os._trace_path, self._os._trace_path + '.satmodh'))
         if debug:
             command += ' -d'
             command += ' -D' * debug_level
@@ -390,7 +383,7 @@ class SattProcess:
         print "INTERMEDIATE PROCESSING",
         print "AND SHRINKING MODEL" if not debug else ''
 
-        tid_files = glob.glob(os.path.join(self._trace_path, self._trace_path + '-*.model'))
+        tid_files = glob.glob(os.path.join(self._os._trace_path, self._os._trace_path + '-*.model'))
         tid_files.sort()
         for i, t in enumerate(tid_files):
             tid_files[i] = os.path.splitext(os.path.basename(t))[0]
@@ -399,16 +392,16 @@ class SattProcess:
                    '"' + os.path.join(self._post_process_bin_path, 'sat-intermediate'))
         if debug:
             command += ' -d '
-        command += (' -w ' + os.path.join(self._trace_path, 'PER_TID.lwm') +
-                    ' -o ' + os.path.join(self._trace_path, 'PER_TID.sat') +
-                    ' ' + os.path.join(self._trace_path, 'PER_TID.model') + ';')
+        command += (' -w ' + os.path.join(self._os._trace_path, 'PER_TID.lwm') +
+                    ' -o ' + os.path.join(self._os._trace_path, 'PER_TID.sat') +
+                    ' ' + os.path.join(self._os._trace_path, 'PER_TID.model') + ';')
         if not debug:
-            command += (' rm ' + os.path.join(self._trace_path, 'PER_TID.model') +
-                        ' ' + os.path.join(self._trace_path, 'PER_TID.lwm') + ';')
+            command += (' rm ' + os.path.join(self._os._trace_path, 'PER_TID.model') +
+                        ' ' + os.path.join(self._os._trace_path, 'PER_TID.lwm') + ';')
             command += (' ' + os.path.join(self._post_process_bin_path, 'sat-shrink-output') +
-                        ' ' + os.path.join(self._trace_path, 'PER_TID.sat'))
+                        ' ' + os.path.join(self._os._trace_path, 'PER_TID.sat'))
         command += ('" | ' + os.path.join(self._post_process_bin_path, 'sat-post') +
-                    ' -o ' + os.path.join(self._trace_path, self._trace_path + '.log'))
+                    ' -o ' + os.path.join(self._os._trace_path, self._os._trace_path + '.log'))
 
         # Execute: INTERMEDIATE
         subprocess.call(command, shell=True)
@@ -416,30 +409,30 @@ class SattProcess:
         if not debug:
             print "MERGING MODEL"
             command = (os.path.join(self._post_process_bin_path, 'sat-merge') +
-                       ' ' + os.path.join(self._trace_path, self._trace_path + '-*.sat') +
-                       ' > ' + os.path.join(self._trace_path, self._trace_path + '.sat0'))
+                       ' ' + os.path.join(self._os._trace_path, self._os._trace_path + '-*.sat') +
+                       ' > ' + os.path.join(self._os._trace_path, self._os._trace_path + '.sat0'))
             subprocess.call(command, shell=True)
 
             # Generate satcbr
             command = (os.path.join(self._post_process_bin_path, sat_collection_cbr_version) +
                        ' ' + collection_file + ' | grep -v "^#" > ' +
-                       os.path.join(self._trace_path, self._trace_path + '.satcbr'))
+                       os.path.join(self._os._trace_path, self._os._trace_path + '.satcbr'))
             subprocess.call(command, shell=True)
 
             # Generate satstats
             command = (os.path.join(self._post_process_bin_path, sat_collection_stats_version) +
                        ' ' + collection_file + ' | grep -v "^#" > ' +
-                       os.path.join(self._trace_path, self._trace_path + '.satstats'))
+                       os.path.join(self._os._trace_path, self._os._trace_path + '.satstats'))
             subprocess.call(command, shell=True)
 
             # Generate satp
             command = (os.path.join(self._post_process_bin_path, sat_collection_tasks_version) +
                        ' ' + collection_file + ' | grep -v "^#" > ' +
-                       os.path.join(self._trace_path, self._trace_path + '.satp'))
+                       os.path.join(self._os._trace_path, self._os._trace_path + '.satp'))
             subprocess.call(command, shell=True)
 
             print "REMOVING PER-PROCESS MODELS"
-            sat_files = glob.glob(os.path.join(self._trace_path, self._trace_path + '-*.sat'))
+            sat_files = glob.glob(os.path.join(self._os._trace_path, self._os._trace_path + '-*.sat'))
             for f in sat_files:
                 os.remove(f)
 
@@ -448,8 +441,8 @@ class SattProcess:
         # demangle symbol names in satsyms file
         print "demangle symbols.."
         operators = ['<<=', '>>=', '->*', '<<', '>>', '<=', '>=', '->', '>', '<']
-        satsym_file = self._trace_path + '/' + self._trace_path + '.satsym'
-        tmpfile = self._trace_path + '/' + self._trace_path + '.satsym_'
+        satsym_file = self._os._trace_path + '/' + self._os._trace_path + '.satsym'
+        tmpfile = self._os._trace_path + '/' + self._os._trace_path + '.satsym_'
         if os.path.isfile(satsym_file):
             os.rename(satsym_file, tmpfile)
             fin = open(tmpfile, 'r')
@@ -511,7 +504,7 @@ class SattProcess:
 
     # ===============================================#
     def SatVersionIntoSatstats(self):
-        satstats_file = self._trace_path + '/' + self._trace_path + '.satstats'
+        satstats_file = self._os._trace_path + '/' + self._os._trace_path + '.satstats'
         ver = envstore.store.get_sat_version()
         f = open(satstats_file, 'w+')
         f.write('VERSION|' + ver + '|SATT tool version used for post-processing')
