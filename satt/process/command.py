@@ -89,7 +89,7 @@ class SattProcess:
         self.RemoveHostFileCache()
         self.CopyBinariesToTraceFolder()
         self.PatchKernelBinaries()
-        if self._os.is_os('Linux'):
+        if self._os.is_os('Linux') or self._os.is_os('Ostro'):
             self.AdjustKernelVma()
         self.DecodeRawPtiData()
 
@@ -182,7 +182,7 @@ class SattProcess:
         if os.path.isfile(self._os.get_vmlinux_path()):
             #
             extract_vmlinux = os.path.join(kernel_path, 'scripts', 'extract-vmlinux')
-            if os.path.isfile(extract_vmlinux):
+            if os.path.isfile(extract_vmlinux) and os.path.basename(self._os.get_vmlinux_path()) == 'vmlinuz':
                 subprocess.call(extract_vmlinux + ' ' + self._os.get_vmlinux_path() + " > " +
                                 os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vmlinux_'), shell=True)
             else:
@@ -281,11 +281,6 @@ class SattProcess:
                         addr = addr.zfill(len(match.group(1)))
                         line = addr + ' ' + match.group(2) + ' ' + match.group(3) + '\n'
                     outf.write(line)
-
-
-
-
-
 
     # ===============================================#
     def DecodeRawPtiData(self):

@@ -47,20 +47,20 @@ class OstroOs(TargetOs):
 
     def get_vmlinux_path(self):
         self.debug_print("OstroOs::get_vmlinux_path")
-        module_path = envstore.store.get_variable('sat_path_modules')
-        if os.path.lexists(module_path):
-            return os.path.join(module_path, 'vmlinux')
+        kernel_path = envstore.store.get_variable('sat_path_kernel')
+        if os.path.lexists(kernel_path):
+            return os.path.join(kernel_path, 'vmlinux')
         else:
-            print "Error: Incorrect module path, check configuration!"
+            print "Error: Incorrect kernel path, check configuration!"
             sys.exit(-1)
 
     def get_system_map_path(self):
         self.debug_print("OstroOs::get_system_map_path")
-        module_path = envstore.store.get_variable('sat_path_modules')
-        if os.path.lexists(module_path):
-            return os.path.join(module_path, 'System.map')
+        kernel_path = envstore.store.get_variable('sat_path_kernel')
+        if os.path.lexists(kernel_path):
+            return os.path.join(kernel_path, 'System.map')
         else:
-            print "Error: Incorrect module path, check configuration!"
+            print "Error: Incorrect kernel path, check configuration!"
             sys.exit(-1)
 
     def get_name(self):
