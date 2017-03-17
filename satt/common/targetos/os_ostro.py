@@ -22,6 +22,7 @@
 import os
 import re
 import sys
+import time
 import pickle
 import platform
 from satt.common import helper
@@ -80,11 +81,20 @@ class OstroOs(TargetOs):
         # /builds/Joule/build/tmp-glibc/sysroots/intel-corei7-64
         # TODO: Use md5 to check whether ipk is already unpacked, so no need to do duplicate work.
         target_ipk_path = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), 'deploy', 'ipk', 'corei7-64')
-        dbg_ipk_hash_list = []
-        ipks = os.walk(target_ipk_path).next()[2]
-        for ipk in ipks:
-            if "-dbg" in ipk:
-                os.system('dpkg -x ' + os.path.join(target_ipk_path, ipk) + ' ' + target_build_path)
+        if os.path.exists(target_ipk_path):
+            dbg_ipk_hash_list = []
+            print(target_ipk_path)
+            ipks = os.walk(target_ipk_path).next()[2]
+            for ipk in ipks:
+                if "-dbg" in ipk:
+                    os.system('dpkg -x ' + os.path.join(target_ipk_path, ipk) + ' ' + target_build_path)
+        else:
+            print("ERROR!!!!: Path does not exists, where debug symbol IPK packages should be !!!")
+            print("ERROR!!!!: Path does not exists, where debug symbol IPK packages should be !!!")
+            print("ERROR!!!!: Path does not exists, where debug symbol IPK packages should be !!!")
+            print("Continuing without debug symbols, only interface functions will be visible!!!")
+            time.sleep(5)
+
 
     def get_debug_paths(self):
         #Return path where debug ipks were extracted (see copy_binaries)
