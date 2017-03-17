@@ -50,15 +50,23 @@ def check_for_debug_symbols(filename):
     if ret_val is not None and ret_val != "":
         line = ret_val.splitlines()[0]
 
+    # Check if object contains symbols
     if "no symbols" in line:
         ret_val = subprocess.check_output("readelf -n " + filename, stderr=subprocess.STDOUT, shell=True)
         match = re.search("Build ID: (\w\w)(\w+)", ret_val)
         if match:
             debug_path_elems = filename.split(os.sep)
+            # 1st trial to find stripped symbols
             if len(debug_path_elems) > 2:
                 symbol_file = os.path.join(os.sep, debug_path_elems[1], debug_path_elems[2],
                                            'debug', '.build-id', match.group(1),
                                            match.group(2) + '.debug')
+            # 2nd trial to find stripped symbols
+            if not symbol_file or ( symbol_file and not os.path.exists(symbol_file)):
+                fn_parts = os.path.split(filename)
+                if len(fn_parts) == 2:
+                    # Build ID will be matched by check_for_debug_symbols caller
+                    symbol_file = os.path.join(fn_parts[0],'.debug',fn_parts[1])
     else:
         pass
 
@@ -125,7 +133,7 @@ def main():
 
     if response:
         # Search by build id (Ubuntu style)
-        if SATT_OS == 0: # Linux
+        if SATT_OS == 0 or SATT_OS == 3: # Linux or Yocto
             status, debug = check_for_debug_symbols(response)
 
         # Check if debug symbols found by name in given paths
