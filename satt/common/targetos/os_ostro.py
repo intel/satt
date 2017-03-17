@@ -96,15 +96,10 @@ class OstroOs(TargetOs):
     # ##################
     def config(self, variables):
         variables['sat_target_source'] = ''
-        variables['sat_target_build'] = '/'
         self._set_sat_kernel_paths(variables)
         self._set_sat_target_paths(variables)
 
     def _set_sat_kernel_paths(self, variables):
-        variables['sat_path_kernel'] = ""
-        variables['sat_path_kernel_src'] = ""
-        variables['sat_path_modules'] = ""
-
         print helper.color.BOLD + 'Select kernel paths:' + helper.color.END
         if variables['sat_control_bus'] == 'SHELL':
             # TODO what if SSH command?

@@ -63,6 +63,7 @@ class SattConfig:
         print '*  (*) [Enter]-key to choose default *'
         print '**************************************\n'
         print helper.color.BOLD + 'Current configuration:' + helper.color.END
+        configurations_exits = True
         if self._variables['sat_os'] >= 0:
             print ('   ' + helper.color.BOLD + targetos.OsHelper.osdata[self._variables['sat_os']].Name + helper.color.END)
             print ('   ' + '-' * len(targetos.OsHelper.osdata[self._variables['sat_os']].Name))
@@ -79,20 +80,23 @@ class SattConfig:
                        helper.color.END)
             if self._variables['sat_path_kernel'] != "":
                 print ('   Kernel path   : ' + helper.color.BOLD + self._variables['sat_path_kernel'] + helper.color.END)
+
+            print
+            print helper.color.BOLD + 'Change values:' + helper.color.END
+            print ' * 0) No  - keep current setup'
+            print '   1) Yes - select setup'
+            selection = self._readchar()
+
         else:
             print "   None"
-        print
-        print helper.color.BOLD + 'Change values:' + helper.color.END
-        print ' * 0) No  - keep current setup'
-        print '   1) Yes - select previous setup'
-        print '   2) Yes - define new setup'
-        selection = self._readchar()
+            selection = '1'
+            configurations_exits = False
+
         print
 
         if selection == '1':
-            self.select_prev_setup()
-
-        elif selection == '2':
+            if configurations_exits:
+                self.select_prev_setup()
             self.set_os()
             self.set_control_bus()
             self.set_trace_destination()
@@ -100,7 +104,6 @@ class SattConfig:
             self._os.config(self._variables)
 
             self._config.add_config(self._variables)
-
     # ===============================================#
     def set_os(self):
         print helper.color.BOLD + 'Select target OS:' + helper.color.END
@@ -172,7 +175,7 @@ class SattConfig:
                     if int(value) >= 0 and int(value) <= len(methods):
                         index = int(value)
                         break
-                elif ord(value) == 13:
+                elif value == '' or ord(value) == 13:
                     break
             self._variables['sat_control_bus'] = methods[index]
             self._config.set_variable('sat_control_bus', methods[index])
@@ -190,9 +193,11 @@ class SattConfig:
         correct = False
         while correct is False:
             correct = True
-            ip = raw_input('   Give IP address to connect (default 127.0.0.1): ')
+            if self._variables['sat_control_ip'] == '':
+                self._variables['sat_control_ip'] = '127.0.0.1'
+            ip = raw_input('   Give IP address to connect (current %s): ' %(self._variables['sat_control_ip'], ))
             if ip == '':
-                ip = '127.0.0.1'
+                break
             values = ip.split('.')
             if len(values) == 4:
                 for d in values:
@@ -213,12 +218,16 @@ class SattConfig:
         setups = self._config.get_config_list()
         print helper.color.BOLD + 'Previous setups:' + helper.color.END
         max_key = max(len(targetos.OsHelper.osdata[x].Name) for x in targetos.OsHelper.osdata)
+        last_setup = len(setups) - 1
         for idx, setup in enumerate(setups):
             if idx > 0:
                 if idx == 1:
-                    print '   ' + str(idx) + ') Empty setup'
+                    print '   ' + str(idx) + ') New setup'
                 else:
-                    print ('   ' + str(idx) + ') ' + helper.color.BOLD +
+                    star = ' '
+                    if last_setup == idx:
+                        star = '*'
+                    print (' ' + star + ' ' + str(idx) + ') ' + helper.color.BOLD +
                            targetos.OsHelper.osdata[setup['sat_os']].Name.ljust(max_key) + helper.color.END),
                     print (': ' + helper.color.BOLD + setup['sat_trace_logging_method'] + helper.color.END +
                            '/' + helper.color.BOLD + setup['sat_control_bus'] + helper.color.END),
