@@ -119,18 +119,37 @@ class OstroOs(TargetOs):
 
         selection = raw_input("   Use kernel modules path: '" + variables['sat_path_modules'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
+            print('\n   Hint: folder which contains kernel module binaries under kernel sub folder')
+            print('   dir   - kernel')
+            print('   file  - modules.dep')
+            print('   files - modules.*\n')
             variables['sat_path_modules'] = raw_input('   Give another kernel modules path: ')
             variables['sat_path_modules'] = variables['sat_path_modules'].rstrip()
         print
 
         selection = raw_input("   Use kernel path: '" + variables['sat_path_kernel'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
+            print('\n   Hint: folder which contains vmlinux and System.map files')
+            print('   dir   - arch')
+            print('   dir   - drivers')
+            print('   dir   - include')
+            print('   dir   - kernel')
+            print('   file  - System.map')
+            print('   file  - vmlinux.*\n')
             variables['sat_path_kernel'] = raw_input('   Give another kernel path: ')
             variables['sat_path_kernel'] = variables['sat_path_kernel'].rstrip()
         print
 
         selection = raw_input("   Use kernel source path: '" + variables['sat_path_kernel_src'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
+            print('\n   Hint: folder which contains kernel sources')
+            print('   dir   - arch')
+            print('   dir   - drivers')
+            print('   dir   - include')
+            print('   file  - Kbuild')
+            print('   file  - Kconfig')
+            print('   dir   - net')
+            print('   dir   - scripts')
             variables['sat_path_kernel_src'] = raw_input('   Give another kernel source path: ')
             variables['sat_path_kernel_src'] = variables['sat_path_kernel_src'].rstrip()
         print
@@ -139,6 +158,11 @@ class OstroOs(TargetOs):
         print helper.color.BOLD + 'Select target paths:' + helper.color.END
         selection = raw_input("   Use target build path: '" + variables['sat_target_build'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
+            print('\n   Hint: folder which contains all other binaries e.g. *.so')
+            print('   dir   - etc')
+            print('   dir   - lib')
+            print('   dir   - usr')
+            print('   dir   - var')
             variables['sat_target_build'] = raw_input('   Give another target build path: ')
             variables['sat_target_build'] = variables['sat_target_build'].rstrip()
         print
