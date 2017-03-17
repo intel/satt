@@ -44,14 +44,6 @@ class SattConfig:
     def __init__(self):
         self._config = envstore.store
         self._variables = self._config.get_current()
-        if 'sat_trace_logging_method' not in self._variables.keys():
-            self._variables['sat_trace_logging_method'] = ''
-        if 'sat_target_source' not in self._variables.keys():
-            self._variables['sat_target_source'] = ''
-        if 'sat_target_build' not in self._variables.keys():
-            self._variables['sat_target_build'] = ''
-        if 'sat_control_bus' not in self._variables.keys():
-            self._variables['sat_control_bus'] = ''
         self._helper = helper.get_instance()
         self._readchar = self._helper.get_readchar_object()
 
@@ -183,8 +175,20 @@ class SattConfig:
 
         if self._variables['sat_control_bus'] == 'SSH':
             self.set_control_ip()
+            self.set_login_id()
         else:
             self._variables['sat_control_ip'] = ''
+
+    def set_login_id(self):
+        print helper.color.BOLD + 'Set Login ID for the SSH:' + helper.color.END
+        if self._variables['sat_login_id'] == '':
+            _temp_login_id = 'No Login ID'
+        else:
+            _temp_login_id = '*current: %s' %(self._variables['sat_login_id'],)
+        _login_id = raw_input('   Give Login ID (%s): ' %(_temp_login_id, ))
+        if _login_id != '':
+            self._variables['sat_login_id'] = _login_id
+        print('   Using Login ID:%s\n' %(self._variables['sat_login_id'],))
 
     # ===============================================#
     def set_control_ip(self):

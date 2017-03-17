@@ -27,13 +27,15 @@ class SshControl(Control):
 
     """
     _ip_address = None
-    _ssh_command = "ssh"
-    _scp_command = "scp"
+    _login_id = ''
+    _ssh_command = 'ssh'
+    _scp_command = 'scp'
 
     def __init__(self, debug, ip_address=None):
         self._debug_print("SshControl::init")
         Control.__init__(self, debug)
         self._ip_address = ip_address
+        self._get_login_id()
         if sys.platform.startswith('win'):
             print "Windows SSH not support yet!"
             sys.exit(-1)
@@ -51,10 +53,14 @@ class SshControl(Control):
         if self._ip_address is None:
             self._ip_address = envstore.store.get_variable('sat_control_ip')
 
+    def _get_login_id(self):
+        if envstore.store.get_variable('sat_login_id'):
+            self._login_id = envstore.store.get_variable('sat_login_id') + '@'
+
     def shell_command(self, command, skip_exception=False):
         self._check_ip_address()
         self._debug_print("SshControl::shell_command")
-        ssh = subprocess.Popen([self._ssh_command, "%s" % self._ip_address, command],
+        ssh = subprocess.Popen([self._ssh_command, "%s%s" %(self._login_id, self._ip_address,), command],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                shell=False)
@@ -65,7 +71,7 @@ class SshControl(Control):
         self._check_ip_address()
         self._debug_print("SshControl::get_remote_file")
 
-        p = subprocess.Popen([self._ssh_command, "%s" % (self._ip_address,), "cat %s" % (copy_from,)],
+        p = subprocess.Popen([self._ssh_command, "%s%s" %(self._login_id, self._ip_address,), "cat %s" % (copy_from,)],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE,
                               shell=False)
@@ -76,6 +82,11 @@ class SshControl(Control):
     def push_local_file(self, copy_from, copy_to):
         self._check_ip_address()
         self._debug_print("SshControl::push_local_file")
+        p = subprocess.Popen([self._scp_command, "%s" %(copy_from,), "%s%s:%s" % (self._login_id, self._ip_address,copy_to, )],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE,
+                              shell=False)
+        res = p.stdout.read()
         return 0
 
     def get_tmp_folder(self):

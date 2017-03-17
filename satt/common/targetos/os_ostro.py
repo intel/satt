@@ -113,14 +113,12 @@ class OstroOs(TargetOs):
             variables['sat_path_modules'] = variables['sat_path_modules'].rstrip()
         print
 
-        variables['sat_path_kernel'] = variables['sat_path_modules'] + '/build'
         selection = raw_input("   Use kernel path: '" + variables['sat_path_kernel'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
             variables['sat_path_kernel'] = raw_input('   Give another kernel path: ')
             variables['sat_path_kernel'] = variables['sat_path_kernel'].rstrip()
         print
 
-        variables['sat_path_kernel_src'] = variables['sat_path_kernel']
         selection = raw_input("   Use kernel source path: '" + variables['sat_path_kernel_src'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
             variables['sat_path_kernel_src'] = raw_input('   Give another kernel source path: ')

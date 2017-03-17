@@ -43,6 +43,7 @@ class EnvStore:
                            'sat_trace_logging_method': '',
                            'sat_control_bus': '',
                            'sat_control_ip': '',
+                           'sat_login_id': '',
                            'sat_path_kernel': '',
                            'sat_path_kernel_src': '',
                            'sat_path_modules': '',
@@ -56,6 +57,19 @@ class EnvStore:
         if os.path.exists(self._conf_path):
             self._configs = pickle.load(open(self._conf_path, 'rb'))
             self._variables = self._configs[0]
+
+    def _set_default_values(self, variables):
+        if 'sat_trace_logging_method' not in self._variables.keys():
+            variables['sat_trace_logging_method'] = ''
+        if 'sat_target_source' not in variables.keys():
+            variables['sat_target_source'] = ''
+        if 'sat_target_build' not in variables.keys():
+            variables['sat_target_build'] = ''
+        if 'sat_control_bus' not in variables.keys():
+            variables['sat_control_bus'] = ''
+        if 'sat_login_id' not in variables.keys():
+            variables['sat_login_id'] = ''
+        return variables
 
     def store(self):
         if self._conf_path != '':
@@ -103,10 +117,10 @@ class EnvStore:
             for key in self._configs[idx].keys():
                 self._variables[key] = self._configs[idx][key]
             pickle.dump(self._configs, open(self._conf_path, 'wb'), pickle.HIGHEST_PROTOCOL)
-        return self._variables.copy()
+        return self._set_default_values(self._variables.copy())
 
     def get_current(self):
-        return self._variables.copy()
+        return self._set_default_values(self._variables.copy())
 
     def set_variable(self, key, value):
         if key in self._variables.keys():
