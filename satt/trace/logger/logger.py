@@ -200,7 +200,7 @@ class Logger(object):
         ''' Get per cpu sideband files and combine into one sideband.bin
         '''
         self._debug_print("get_per_cpu_sideband")
-        sb_files = self._control.shell_command('ls /sys/kernel/debug/sat/cpu*_sideband').strip().split('\n')
+        sb_files = self._control.shell_command('ls /sys/kernel/debug/sat/cpu*_sideband').strip().split()
         cpu_sb_paths = []
         combined_sb = os.path.join(self.trace_path, 'sideband.bin')
         for f in sb_files:
