@@ -181,6 +181,30 @@ def main():
             if os.path.isfile(host_file_name):
                 print host_file_name.rstrip()
             return
+
+    elif SATT_CONTROL_BUS == 'SSH' and SATT_SSH_IP:
+        LINUX_DISTRO = True
+        if LINUX_DISTRO == 'Yocto':
+            host_file = os.path.join(file_cache, os.path.basename(args.NEEDLE))
+            host_file_debug = os.path.join(file_cache, os.path.basename(args.NEEDLE))
+
+            scp = subprocess.Popen([self._scp_command, "{0}:{1}".format(SATT_SSH_IP, copy_from), host_file],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=False)
+            sts = scp.wait()
+            res = scp.stdout.readlines()
+            scp = subprocess.Popen([self._scp_command, "{0}:{1}".format(SATT_SSH_IP, copy_from), host_file_debug],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=False)
+            sts = scp.wait()
+            res = scp.stdout.readlines()
+        else:
+            return
+
+        return
+
     else:
         return
 
