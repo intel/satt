@@ -79,19 +79,19 @@ class OstroOs(TargetOs):
 
         # Hacked for Joule
         # /builds/Joule/build/tmp-glibc/sysroots/intel-corei7-64
-        # TODO: Use md5 to check whether ipk is already unpacked, so no need to do duplicate work.
-        target_ipk_path = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), 'deploy', 'ipk', 'corei7-64')
-        if os.path.exists(target_ipk_path):
-            dbg_ipk_hash_list = []
-            print(target_ipk_path)
-            ipks = os.walk(target_ipk_path).next()[2]
-            for ipk in ipks:
-                if "-dbg" in ipk:
-                    os.system('dpkg -x ' + os.path.join(target_ipk_path, ipk) + ' ' + target_build_path)
+        # TODO: Use md5 to check whether pkg is already unpacked, so no need to do duplicate work.
+        pkgtype="deb" # could be "ipk" or "rpm"
+        target_pkg_path = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), 'deploy', pkgtype, 'corei7-64')
+        if os.path.exists(target_pkg_path):
+            dbg_pkg_hash_list = []
+            print(target_pkg_path)
+            pkgs = os.walk(target_pkg_path).next()[2]
+            for pkg in pkgs:
+                if "-dbg" in pkg:
+                    os.system('dpkg -x ' + os.path.join(target_pkg_path, pkg) + ' ' + target_build_path)
         else:
-            print("ERROR!!!!: Path does not exists, where debug symbol IPK packages should be !!!")
-            print("ERROR!!!!: Path does not exists, where debug symbol IPK packages should be !!!")
-            print("ERROR!!!!: Path does not exists, where debug symbol IPK packages should be !!!")
+            print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
+            print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
             print("Continuing without debug symbols, only interface functions will be visible!!!")
             time.sleep(5)
 
