@@ -19,7 +19,7 @@
 #*****************************************************
 
 SAT_BIN_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
-SAT_RELEASE_SERVER="http://satt.example.com"
+SAT_RELEASE_SERVER="http://your . release . server . com"
 
 # $SAT_HOME --> Path to SAT-tool root folder
 export SAT_HOME=$(cd $SAT_BIN_PATH/../ && pwd )

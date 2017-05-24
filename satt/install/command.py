@@ -23,7 +23,7 @@ import sys
 import argparse
 from satt.common import envstore
 
-satt_release_server="http://satt.example.com"
+satt_release_server="http://your . release . server . com"
 satt_python_packages = ['git+https://github.com/sch3m4/pyadb', 'pyelftools', 'requests']
 satt_ui_python_packages = []
 

@@ -67,7 +67,7 @@ class SattVisualize:
 
         if self._args.remote:
             # send data into remote sat server
-            sat_gui_server = 'satt.example.com'
+            sat_gui_server = 'your . gui . server . com'
             sat_upload_path = '/upload/'
             sat_tgz_file = self._args.PATH
             self.url = "http://" + sat_gui_server

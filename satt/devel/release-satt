@@ -38,7 +38,7 @@
 
 
 SATT_RELEASE_SERVER_PREFIX="http://"
-SATT_RELEASE_SERVER="satt.example.com"
+SATT_RELEASE_SERVER="your . release . server . com"
 
 SATT_GIT_COMMIT_URL="https://github.com/01org/satt/commit/%H"
 
