@@ -74,24 +74,45 @@ class LinuxOs(TargetOs):
             if os.path.exists(kmods):
                 variables['sat_path_modules'] = kmods
 
-        selection = raw_input("   Use kernel modules path: '" + variables['sat_path_modules'] + "' ? [Y/n] ")
+        selection = 'n'
+        if variables['sat_path_modules'] != '':
+            selection = raw_input("   Use kernel modules path: '" + variables['sat_path_modules'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
-            variables['sat_path_modules'] = raw_input('   Give another kernel modules path: ')
-            variables['sat_path_modules'] = variables['sat_path_modules'].rstrip()
+            self.print_path_type_hint('sat_path_modules')
+            while(True):
+                self._helper.prepare_readline()
+                variables['sat_path_modules'] = raw_input('   Give another kernel modules path: ')
+                variables['sat_path_modules'] = variables['sat_path_modules'].rstrip()
+                if self.validate_target_path(variables, 'sat_path_modules'):
+                    break
         print
 
         variables['sat_path_kernel'] = variables['sat_path_modules'] + '/build'
-        selection = raw_input("   Use kernel path: '" + variables['sat_path_kernel'] + "' ? [Y/n] ")
+        selection = 'n'
+        if variables['sat_path_kernel'] != '':
+            selection = raw_input("   Use kernel path: '" + variables['sat_path_kernel'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
-            variables['sat_path_kernel'] = raw_input('   Give another kernel path: ')
-            variables['sat_path_kernel'] = variables['sat_path_kernel'].rstrip()
+            self.print_path_type_hint('sat_path_kernel')
+            while(True):
+                self._helper.prepare_readline()
+                variables['sat_path_kernel'] = raw_input('   Give another kernel path: ')
+                variables['sat_path_kernel'] = variables['sat_path_kernel'].rstrip()
+                if self.validate_target_path(variables, 'sat_path_kernel'):
+                    break
         print
 
         variables['sat_path_kernel_src'] = variables['sat_path_kernel']
-        selection = raw_input("   Use kernel source path: '" + variables['sat_path_kernel_src'] + "' ? [Y/n] ")
+        selection = 'n'
+        if variables['sat_path_kernel_src'] != '':
+            selection = raw_input("   Use kernel source path: '" + variables['sat_path_kernel_src'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
-            variables['sat_path_kernel_src'] = raw_input('   Give another kernel source path: ')
-            variables['sat_path_kernel_src'] = variables['sat_path_kernel_src'].rstrip()
+            self.print_path_type_hint('sat_path_kernel_src')
+            while(True):
+                self._helper.prepare_readline()
+                variables['sat_path_kernel_src'] = raw_input('   Give another kernel source path: ')
+                variables['sat_path_kernel_src'] = variables['sat_path_kernel_src'].rstrip()
+                if self.validate_target_path(variables, 'sat_path_kernel_src'):
+                    break
         print
 
     def get_debug_paths(self):

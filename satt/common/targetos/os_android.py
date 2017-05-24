@@ -208,8 +208,13 @@ class AndroidOs(TargetOs):
 
         selection = raw_input("   Use kernel path: '" + variables['sat_path_kernel'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
-            variables['sat_path_kernel'] = raw_input('Give another kernel path: ')
-            variables['sat_path_kernel'] = variables['sat_path_kernel'].rstrip()
+            self.print_path_type_hint('sat_path_kernel')
+            while(True):
+                self._helper.prepare_readline()
+                variables['sat_path_kernel'] = raw_input('Give another kernel path: ')
+                variables['sat_path_kernel'] = variables['sat_path_kernel'].rstrip()
+                if self.validate_target_path(variables, 'sat_path_kernel'):
+                    break
             print "'" + variables['sat_path_kernel'] + "'"
         else:
             print 'Auto select ' + helper.color.BOLD + 'Target kernel path' + helper.color.END
@@ -219,8 +224,13 @@ class AndroidOs(TargetOs):
         print
         selection = raw_input("   Use kernel source path: '" + variables['sat_path_kernel_src'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
-            variables['sat_path_kernel_src'] = raw_input('Give another kernel source path: ')
-            variables['sat_path_kernel_src'] = variables['sat_path_kernel_src'].rstrip()
+            self.print_path_type_hint('sat_path_kernel_src')
+            while(True):
+                self._helper.prepare_readline()
+                variables['sat_path_kernel_src'] = raw_input('Give another kernel source path: ')
+                variables['sat_path_kernel_src'] = variables['sat_path_kernel_src'].rstrip()
+                if self.validate_target_path(variables, 'sat_path_kernel_src'):
+                    break
             print "'" + variables['sat_path_kernel_src'] + "'"
         else:
             print 'Auto select ' + helper.color.BOLD + 'Target kernel source path' + helper.color.END
@@ -249,8 +259,13 @@ class AndroidOs(TargetOs):
 
         selection = raw_input("   Use kernel modules path: '" + variables['sat_path_modules'] + "' ? [Y/n] ")
         if selection == 'n' or selection == 'N':
-            variables['sat_path_modules'] = raw_input('Give another kernel modules path: ')
-            variables['sat_path_modules'] = variables['sat_path_modules'].rstrip()
+            self.print_path_type_hint('sat_path_modules')
+            while(True):
+                self._helper.prepare_readline()
+                variables['sat_path_modules'] = raw_input('Give another kernel modules path: ')
+                variables['sat_path_modules'] = variables['sat_path_modules'].rstrip()
+                if self.validate_target_path(variables, 'sat_path_modules'):
+                    break
             print "'" + variables['sat_path_modules'] + "'"
         else:
             print 'Auto select ' + helper.color.BOLD + 'Target kernel modules path' + helper.color.END

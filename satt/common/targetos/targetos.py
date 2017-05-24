@@ -105,6 +105,78 @@ class TargetOs(object):
     def get_vmlinux_path(self):
         ''' Virtual function
         '''
+    def print_path_type_hint(self, path_type):
+        if path_type == 'sat_path_modules':
+            print('\n   Hint: folder which contains kernel module binaries under kernel sub folder')
+            print('   dir   - kernel')
+            print('   file  - modules.dep')
+            print('   files - modules.*\n')
+        elif path_type == 'sat_path_kernel':
+            print('\n   Hint: folder which contains vmlinux and System.map files')
+            print('   dir   - arch')
+            print('   dir   - drivers')
+            print('   dir   - include')
+            print('   dir   - kernel')
+            print('   file  - System.map')
+            print('   file  - vmlinux.*\n')
+        elif path_type == 'sat_path_kernel':
+            print('\n   Hint: folder which contains vmlinux and System.map files')
+            print('   dir   - arch')
+            print('   dir   - drivers')
+            print('   dir   - include')
+            print('   dir   - kernel')
+            print('   file  - System.map')
+            print('   file  - vmlinux.*\n')
+        elif path_type == 'sat_path_kernel_src':
+            print('\n   Hint: folder which contains kernel sources')
+            print('   dir   - arch')
+            print('   dir   - drivers')
+            print('   dir   - include')
+            print('   file  - Kbuild')
+            print('   file  - Kconfig')
+            print('   dir   - net')
+            print('   dir   - scripts')
+        elif path_type == 'sat_target_build':
+            print('\n   Hint: folder which contains all other binaries e.g. *.so')
+            print('   dir   - etc')
+            print('   dir   - lib')
+            print('   dir   - usr')
+            print('   dir   - var')
+
+    def validate_target_path(self, paths, path_type):
+        if path_type in paths:
+            paths[path_type] = os.path.abspath(os.path.expanduser(paths[path_type]))
+
+            path_found = os.path.isdir(paths[path_type])
+            files_found = False
+
+            if path_type == 'sat_path_modules':
+                files_found = os.path.exists(os.path.join(paths[path_type], 'modules.dep'))
+            elif path_type == 'sat_path_kernel':
+                files_found = os.path.exists(os.path.join(paths[path_type], 'System.map'))
+            elif path_type == 'sat_path_kernel_src':
+                files_found = os.path.exists(os.path.join(paths[path_type], 'Kconfig'))
+            elif path_type == 'sat_target_build':
+                files_found = True
+
+            if path_found:
+                if files_found:
+                    print('   Path found and looks valid!')
+                    return True
+                else:
+                    print(helper.color.BOLD + '   WARNING: Path found, but does not look a valid path!' + helper.color.END)
+            else:
+                print(helper.color.BOLD + '   ERROR: Path does not found?' + helper.color.END)
+
+            # Pass trought, some path was wrong
+            selection = raw_input("   Do you want to give that path again? [Y/n] ")
+            if selection == 'Y' or selection == 'y' or selection == None or selection == '':
+                return False
+            return True
+
+        else:
+            print('   ERROR in validate_target_path validation')
+            raise
 
     def get_system_map_path(self):
         ''' Virtual function
