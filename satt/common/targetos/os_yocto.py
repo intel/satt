@@ -30,7 +30,7 @@ from satt.common import envstore
 from satt.common.targetos.targetos import TargetOs
 
 
-class OstroOs(TargetOs):
+class YoctoOs(TargetOs):
     """ Linux specific impl
     """
 
@@ -43,11 +43,11 @@ class OstroOs(TargetOs):
 # ####################################
     def get_os_data(self, trace_path):
         TargetOs.get_os_data(self, trace_path)
-        self.debug_print("OstroOs::get_os_data")
+        self.debug_print("Yocto::get_os_data")
         self._get_build_info()
 
     def get_vmlinux_path(self):
-        self.debug_print("OstroOs::get_vmlinux_path")
+        self.debug_print("Yocto::get_vmlinux_path")
         kernel_path = envstore.store.get_variable('sat_path_kernel')
         if os.path.lexists(kernel_path):
             return os.path.join(kernel_path, 'vmlinux')
@@ -56,7 +56,7 @@ class OstroOs(TargetOs):
             sys.exit(-1)
 
     def get_system_map_path(self):
-        self.debug_print("OstroOs::get_system_map_path")
+        self.debug_print("Yocto::get_system_map_path")
         kernel_path = envstore.store.get_variable('sat_path_kernel')
         if os.path.lexists(kernel_path):
             return os.path.join(kernel_path, 'System.map')
@@ -65,13 +65,13 @@ class OstroOs(TargetOs):
             sys.exit(-1)
 
     def get_name(self):
-        self.debug_print("OstroOs::get_name")
-        return 'Ostro'
+        self.debug_print("Yocto::get_name")
+        return 'Yocto'
 
     def copy_binaries(self):
         ''' extract ipk debug packages into sysroot folder
         '''
-        self.debug_print("OstroOs::copy_binaries")
+        self.debug_print("Yocto::copy_binaries")
         target_build_path = envstore.store.get_variable('sat_target_build')
         if os.path.lexists(os.path.join(self._trace_path, 'binaries', 'system')):
             os.remove(os.path.join(self._trace_path, 'binaries', 'system'))
@@ -94,7 +94,6 @@ class OstroOs(TargetOs):
             print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
             print("Continuing without debug symbols, only interface functions will be visible!!!")
             time.sleep(5)
-
 
     def get_debug_paths(self):
         #Return path where debug ipks were extracted (see copy_binaries)

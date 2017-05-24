@@ -45,9 +45,9 @@ def get_instance():
             elif os == OsHelper.ChromeOS:
                 from satt.common.targetos.os_chromeos import ChromeOs
                 os_instance = ChromeOs()
-            elif os == OsHelper.OstroOS:
-                from satt.common.targetos.os_ostro import OstroOs
-                os_instance = OstroOs()
+            elif os == OsHelper.YoctoOs:
+                from satt.common.targetos.os_yocto import YoctoOs
+                os_instance = YoctoOs()
             else:
                 print "ERROR: Unsupported target OS type (" + os + ")"
                 sys.exit(-1)
@@ -66,11 +66,11 @@ class OsData:
 
 
 class OsHelper:
-    Linux, Android, ChromeOS, OstroOS = range(4)
+    Linux, Android, ChromeOS, YoctoOs = range(4)
     osdata = {Linux: OsData('Linux', ['SSH', 'SHELL'], False),
               Android: OsData('Android', ['ADB'], True),
               ChromeOS: OsData('ChromeOS', ['SSH', 'SHELL'], False),
-              OstroOS: OsData('OstroOS', ['SSH'], False)}
+              YoctoOs: OsData('Yocto', ['SSH'], False)}
 
 class TargetOs(object):
     """ OS specific base class

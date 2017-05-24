@@ -89,7 +89,7 @@ class SattProcess:
         self.RemoveHostFileCache()
         self.CopyBinariesToTraceFolder()
         self.PatchKernelBinaries()
-        if self._os.is_os('Linux') or self._os.is_os('Ostro'):
+        if self._os.is_os('Linux') or self._os.is_os('Yocto'):
             self.AdjustKernelVma()
         self.DecodeRawPtiData()
 
@@ -194,7 +194,7 @@ class SattProcess:
         # copy original kmods to trace/binaries folder
         modules_path = envstore.store.get_variable('sat_path_modules')
         if os.path.exists(modules_path):
-            if self._os.is_os('Linux') or self._os.is_os('Ostro'):
+            if self._os.is_os('Linux') or self._os.is_os('Yocto'):
                 kmod_pattern = '*.ko'
                 for root, dirs, files in os.walk(modules_path):
                     for filename in fnmatch.filter(files, kmod_pattern):
