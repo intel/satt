@@ -80,7 +80,7 @@ class RamLogger(Logger):
         self._debug_print("get_trace_data")
         # Get RTIT data of each core
         trace_streams = self._control.shell_command("ls /sys/kernel/debug/sat/*_stream")
-        trace_streams = trace_streams.strip().splitlines()
+        trace_streams = trace_streams.strip().split()
 
         off_file = open(os.path.join(self.trace_path, "cpu_offsets.txt"), "w")
         for cpu_stream in trace_streams:

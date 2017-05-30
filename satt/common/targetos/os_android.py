@@ -318,6 +318,8 @@ class AndroidOs(TargetOs):
                 index_count = 0
                 art_file_amount = len(dev_art_ls.splitlines())
                 for line in dev_art_ls.splitlines():
+                    #strip the leading and trailing spaces
+                    line = line.strip();
                     index_count += 1
                     if not line:
                         continue
