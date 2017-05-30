@@ -28,6 +28,7 @@ def main():
 
     sat_path = os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
     sys.path.append(os.path.join(sat_path))
+    os.environ['SATT_EXEC'] = os.path.realpath(__file__)
 
     VENV = hasattr(sys, "real_prefix")
     satt_venv_bin = os.path.join(sat_path,'bin','env', 'bin')

@@ -21,11 +21,17 @@
 import os
 import sys
 import argparse
+import urllib2
+import tarfile
+import subprocess
 from satt.common import envstore
 
 satt_release_server="http://your . release . server . com"
 satt_python_packages = ['git+https://github.com/sch3m4/pyadb', 'pyelftools', 'requests']
 satt_ui_python_packages = []
+
+DISASSEMBLER = 'capstone-master'
+DISASSEMBLER_URL = 'https://github.com/aquynh/capstone/archive/master.tar.gz'
 
 ##################################
 # Command file for satt install
@@ -42,6 +48,7 @@ class SattInstall:
 
     def __init__(self):
         self._sat_home = envstore.store.get_sat_home()
+        self._disassembler_path = os.path.join(self._sat_home, 'src', 'parser', DISASSEMBLER)
 
     def action(self):
         # Parameter handling
@@ -59,11 +66,11 @@ class SattInstall:
 
         # Check latest satt version in server for update
         try:
-            import urllib2
-            proxy_handler = urllib2.ProxyHandler({})
-            opener = urllib2.build_opener(proxy_handler)
-            resp = opener.open(satt_release_server + '/releases/version.txt')
-            self._server_version = resp.read().rstrip()
+            if not ' ' in satt_release_server:
+                proxy_handler = urllib2.ProxyHandler({})
+                opener = urllib2.build_opener(proxy_handler)
+                resp = opener.open(satt_release_server + '/releases/version.txt')
+                self._server_version = resp.read().rstrip()
         except:
             print ("Can't read version info from SATT server")
 
@@ -96,28 +103,18 @@ class SattInstall:
                 print ("SATT environment is up-to-date")
 
         if self._install:
-            print ("Install..")
-            # Create link to /usr/bin
-            src_path = os.path.join(self._sat_home, 'bin', 'satt')
-            dest_path = '/usr/bin/satt'
-            desc_text = 'Request sudo access to install satt into ' + dest_path
-            if os.path.lexists(dest_path):
-                if os.readlink(dest_path) != src_path:
-                    print (desc_text)
-                    os.system('sudo rm -f ' + dest_path)
-                    os.system('sudo ln -s ' + src_path + ' ' + dest_path)
-            else:
-                print (desc_text)
-                os.system('sudo ln -s ' + src_path + ' ' + dest_path)
+            # Install satt to path
+            self.install_satt_to_path()
 
-            # Add satt autocomplete script
-            src_path = os.path.join(self._sat_home, 'conf', 'satt.completion')
-            dest_path = '/etc/bash_completion.d/satt'
-            if os.path.exists('/etc/bash_completion.d'):
-                os.system('sudo cp -f ' + src_path + ' ' + dest_path)
+            # Add satt to bash autocompletion
+            self.add_satt_autocompletion()
 
+            # Install virtualenv env
             self.enable_install_virtualenv()
 
+            print("\n**************************************************************")
+            print("*** Install python packages to <satt>/bin/env")
+            print("**************************************************************")
             # Install packages
             virtual_env_pip_path = os.path.join(self._sat_home, 'bin', 'env','bin','pip')
             if not os.path.exists(virtual_env_pip_path):
@@ -131,10 +128,18 @@ class SattInstall:
                     print ("Error installing package " + package)
                     print (e)
 
+            # Install disassembler from the git
+            self.check_disassembler()
+
+            # Install parser
+            self.build_satt_parser()
+
             # Install UI python components
             # Pure Linux version, does not work with Windows
             if self._args.ui:
-                print ("Installing required UI packages")
+                print("\n**************************************************************")
+                print("*** Install required python packages for SATT the UI")
+                print("**************************************************************")
                 error = False
                 sat_backend_requirements = os.path.join(self._sat_home, 'satt', 'visualize', 'backend', 'requirement.txt')
                 with open(sat_backend_requirements) as f:
@@ -148,40 +153,60 @@ class SattInstall:
                     print ("ERROR: All UI packages was not installed correctly")
                     print ("try to install required packages and run again > satt install --ui ")
 
-                print ("Postgresql DB configuration")
+                print("\n**************************************************************")
+                print("*** Creating Postgresql DB configuration")
+                print("**************************************************************")
                 try:
-                    user = os.popen('''sudo -u postgres psql -q --command "SELECT * FROM pg_user WHERE usename = 'sat';" ''').read()
-                    if "sat" not in user:
-                        os.system('''sudo -u postgres psql -q --command "CREATE USER sat WITH PASSWORD 'uranus';" ''')
-                    else:
-                        print ("User Ok")
+                    use_sudo = raw_input('Would you like to use sudo rights to install satt user for postgresql db [y/n]?\n')
+                    if use_sudo in ['y','Y','yes','Yes']:
+                        user = os.popen('''sudo -u postgres psql -q --command "SELECT * FROM pg_user WHERE usename = 'sat';" ''').read()
+                        if "sat" not in user:
+                            os.system('''sudo -u postgres psql -q --command "CREATE USER sat WITH PASSWORD 'uranus';" ''')
+                        else:
+                            print ("User Ok")
 
-                    db = os.popen('''sudo -u postgres psql -q --command "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = 'sat';"''').read()
-                    if "sat" not in db:
-                        os.system('''sudo -u postgres psql -q --command "CREATE DATABASE sat OWNER sat;" ''')
-                    else:
-                        print ("DB Ok")
+                        db = os.popen('''sudo -u postgres psql -q --command "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = 'sat';"''').read()
+                        if "sat" not in db:
+                            os.system('''sudo -u postgres psql -q --command "CREATE DATABASE sat OWNER sat;" ''')
+                        else:
+                            print ("DB Ok")
 
-                    # Find pg_hba.conf filepath
-                    hba_file = os.popen('''sudo -u postgres psql -q -P format=unaligned --command "SHOW hba_file;"''').read()
-                    hba_file = hba_file.split('\n')[1]
+                        # Find pg_hba.conf filepath
+                        hba_file = os.popen('''sudo -u postgres psql -q -P format=unaligned --command "SHOW hba_file;"''').read()
+                        hba_file = hba_file.split('\n')[1]
 
-                    # Permissions check
-                    sat_user = os.system('sudo grep -q "sat" ' + hba_file)
-                    if sat_user:
-                        os.system('''sudo sed -i 's/local.*all.*postgres.*peer/local   all             postgres                                peer\\nlocal   all             sat                                     trust/' ''' + hba_file)
-                        # Restart postgres
-                        os.system('''sudo -u postgres psql -q --command "SELECT pg_reload_conf();"''')
-                    else:
-                        print ("Permissions Ok")
+                        # Permissions check
+                        sat_user = os.system('sudo grep -q "sat" ' + hba_file)
+                        if sat_user:
+                            os.system('''sudo sed -i 's/local.*all.*postgres.*peer/local   all             postgres                                peer\\nlocal   all             sat                                     trust/' ''' + hba_file)
+                            # Restart postgres
+                            os.system('''sudo -u postgres psql -q --command "SELECT pg_reload_conf();"''')
+                        else:
+                            print ("Permissions Ok")
 
                 except Exception as e:
                     print ("ERROR: DB configuration failed, please check the erros and try again.")
                     print (e)
 
+
             print ("Install complete.")
 
+    def add_satt_autocompletion(self):
+        print("\n**************************************************************")
+        print("*** Add SATT to bash autocompletion")
+        print("**************************************************************")
+        # Add satt autocomplete script
+        use_sudo = raw_input('Would you like to use sudo rights to add satt support for bash autocompletition [y/n]?\n')
+        if use_sudo in ['y','Y','yes','Yes']:
+            src_path = os.path.join(self._sat_home, 'conf', 'satt.completion')
+            dest_path = '/etc/bash_completion.d/satt'
+            if os.path.exists('/etc/bash_completion.d'):
+                os.system('sudo cp -f ' + src_path + ' ' + dest_path)
+
     def enable_install_virtualenv(self):
+        print("\n**************************************************************")
+        print("*** Install python virtual env to <satt>/bin/env")
+        print("**************************************************************")
         # Check if Virtual env has been installed
         VENV = hasattr(sys, "real_prefix")
 
@@ -199,3 +224,110 @@ class SattInstall:
                 print ("ERROR: Virtualenv installation error!")
         else:
             print ("Virtualenv installed")
+
+    def check_disassembler(self):
+        print("\n**************************************************************")
+        print("*** Install disassembler")
+        print("**************************************************************")
+        if (not os.path.exists(self._disassembler_path)):
+            download_disassembler()
+        self.install_disassembler()
+
+    def download_disassembler(self):
+        proxy = {}
+        if os.environ.get('https_proxy'):
+            proxy['https'] = os.environ.get('https_proxy')
+        proxy_handler = urllib2.ProxyHandler(proxy)
+        opener = urllib2.build_opener(proxy_handler)
+        f = opener.open(DISASSEMBLER_URL)
+        print('Downloading disassembler')
+        data = f.read()
+        with open('capstone.tgz', 'wb') as capstone_f:
+           capstone_f.write(data)
+        #tar = tarfile.open(mode = 'r:gz', fileobj = StringIO(data))
+        tar = tarfile.open('capstone.tgz', mode = 'r:gz')
+        tar.extractall(path=os.path.join(self._sat_home, 'src', 'parser'))
+        tar.close()
+
+        os.remove('capstone.tgz')
+
+    def install_disassembler(self):
+        capstone_binaries_dir = os.path.join(self._sat_home, 'src', 'parser', DISASSEMBLER, 'binaries')
+        try:
+            os.makedirs(capstone_binaries_dir)
+        except:
+            pass
+
+        os.chdir(os.path.join(self._sat_home, 'src', 'parser', DISASSEMBLER))
+        os.environ['PREFIX'] = capstone_binaries_dir
+        subprocess.call('CAPSTONE_ARCHS="x86" CAPSTONE_STATIC=yes ./make.sh', shell=True, env=os.environ)
+        subprocess.call('./make.sh install', shell=True, env=os.environ)
+
+    def _check_and_remove_installed_satt_path(self, satt_symlink_path):
+        # Check that there are no multiple SATTs in exec paths
+        first_satt_path = subprocess.check_output(['which', 'satt']).strip()
+        if not first_satt_path == satt_symlink_path:
+            if os.access(os.path.dirname(first_satt_path), os.W_OK):
+                os.remove(first_satt_path)
+                print('Info: removed satt file from {0}'.format(first_satt_path))
+                return True
+            else:
+                print('ERROR: Multiple satt files in path, please remote this instance "{0}"'.format(first_satt_path))
+        return False
+
+    def install_satt_to_path(self):
+        print("\n**************************************************************")
+        print("*** Add SATT to path")
+        print("**************************************************************")
+        paths = os.environ['PATH']
+        bin_accessed_paths = []
+        for path in paths.split(":"):
+            if (os.access(path, os.W_OK|os.X_OK|os.R_OK) and
+                not path == envstore.store.get_sat_venv_bin()):
+                bin_accessed_paths.append(path)
+
+        # Sort paths by length and install to shortest path
+        bin_accessed_paths.sort(key = len)
+        if len(bin_accessed_paths):
+            satt_symlink_path = os.path.join(bin_accessed_paths[0], 'satt')
+            if os.path.exists(satt_symlink_path):
+                os.remove(satt_symlink_path)
+
+            os.symlink(os.environ['SATT_EXEC'], satt_symlink_path)
+            print('SATT symbolic link added to PATH "{0}"'.format(satt_symlink_path))
+            while (self._check_and_remove_installed_satt_path(satt_symlink_path)):
+                pass
+
+        else:
+            print('Warninig: Could not install SATT to any local PATH')
+            use_sudo = raw_input('Would you like to use sudo access right to create satt link to /usr/bin/satt [y/n]?\n')
+            if use_sudo in ['y','Y','yes','Yes']:
+                # Create link to /usr/bin
+                src_path = os.path.join(self._sat_home, 'bin', 'satt')
+                dest_path = '/usr/bin/satt'
+                desc_text = 'Request sudo access to install satt into ' + dest_path
+                if os.path.lexists(dest_path):
+                    if os.readlink(dest_path) != src_path:
+                        print (desc_text)
+                        os.system('sudo rm -f ' + dest_path)
+                        os.system('sudo ln -s ' + src_path + ' ' + dest_path)
+                else:
+                    print (desc_text)
+                    os.system('sudo ln -s ' + src_path + ' ' + dest_path)
+
+    def build_satt_parser(self):
+        print("\n**************************************************************")
+        print("*** Build SATT-parser")
+        print("**************************************************************")
+
+        os.chdir(os.path.join(self._sat_home, 'src', 'parser', 'post-processor'))
+
+        # scons flags="-static -I $SAT_HOME/src/parser/udis86-master/binaries/include -L $SAT_HOME/src/parser/udis86-master/binaries/lib"
+        subprocess.call("""scons flags="-static -I {0} -L {1} -L {2}" """.format(
+            os.path.join(self._disassembler_path, 'binaries', 'include'),
+            os.path.join(self._disassembler_path, 'binaries', 'lib'),
+            os.path.join(self._disassembler_path, 'binaries', 'lib64')), shell=True, env=os.environ)
+
+        tar = tarfile.open(os.path.join(self._sat_home, 'src', 'parser', 'post-processor', 'sat-post-processor-binaries.tgz'), mode = 'r:gz')
+        tar.extractall(path=os.path.join(self._sat_home, 'satt', 'process'))
+        tar.close()
