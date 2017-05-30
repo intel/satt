@@ -2,6 +2,8 @@
 
 Experimental Linux SW tool to trace, process and analyze full stack SW traces utilizing Intel HW tracing block Intel PT (Intel Processor Trace).
 
+![alt text](https://raw.githubusercontent.com/01org/satt/master/doc/img/sat-intro-gui.jpg)
+
 ## Overview
 
 SATT allows to trace Linux based OSes running in X86 which has Intel PT tracing block. Intel PT feature needs to be enabled in HW.
@@ -28,13 +30,14 @@ Web based UI will allow to study execution in function level from All CPU's, Pro
 
 ## Install SATT
 
-### Fetch SATT tool and it's dependencies
-
-  1. Create new empty directory for satt tool
-  2. Copy satt/devel/get-satt.sh file to the created directory
-  3. run get-satt.sh in the created directory:
+### Install needed dependencies
 ```
-./get-satt.sh
+sudo apt install build-essential scons libelf-dev python-pip git binutils-dev autoconf libtool libiberty-dev zlib1g-dev python-dev (python-virtualenv) postgresql-9.x libpq-dev
+```
+
+### Clone or Download SATT tool
+```
+git clone https://github.com/01org/satt.git
 ```
 
 ### Install
@@ -42,6 +45,17 @@ Web based UI will allow to study execution in function level from All CPU's, Pro
 ./bin/satt install --ui
 
 ```
+Installer will ask sudo access rights when needed
+ * Adds the satt command to to path
+ * Adds the satt to bash completion (sudo)
+ * Download and compile disassembler (Capstone)
+ * Compile SATT parser
+ * Install python virtual-env under <satt>/bin/env folder
+ * Install needed python packaged to virtual-env
+
+When --ui flag used
+ * Adds satt user for postgres db (sudo)
+ * Adds satt db for postgres db (sudo)
 
 ### Build UI
 ```
