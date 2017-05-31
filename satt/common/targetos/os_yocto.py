@@ -25,6 +25,7 @@ import sys
 import time
 import pickle
 import platform
+import subprocess
 from satt.common import helper
 from satt.common import envstore
 from satt.common.targetos.targetos import TargetOs
@@ -33,6 +34,7 @@ from satt.common.targetos.targetos import TargetOs
 class YoctoOs(TargetOs):
     """ Linux specific impl
     """
+    _package_hashes = []
 
     def __init__(self):
         # Base class init call
@@ -77,18 +79,42 @@ class YoctoOs(TargetOs):
             os.remove(os.path.join(self._trace_path, 'binaries', 'system'))
         os.symlink(target_build_path, os.path.join(self._trace_path, 'binaries', 'system'))
 
+        md5_cmd = 'md5'
+        try:
+            subprocess.check_output(['which', md5_cmd])
+        except:
+            md5_cmd = 'md5sum'
+
         # Hacked for Joule
         # /builds/Joule/build/tmp-glibc/sysroots/intel-corei7-64
-        # TODO: Use md5 to check whether pkg is already unpacked, so no need to do duplicate work.
         pkgtype="deb" # could be "ipk" or "rpm"
+        satt_pkg_cache_file = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), '.satt-cache')
+        if os.path.exists(satt_pkg_cache_file):
+            self._package_hashes = pickle.load(open(satt_pkg_cache_file, 'rb'))
         target_pkg_path = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), 'deploy', pkgtype, 'corei7-64')
         if os.path.exists(target_pkg_path):
             dbg_pkg_hash_list = []
             print(target_pkg_path)
             pkgs = os.walk(target_pkg_path).next()[2]
+            pkgs = filter(lambda k: '-dbg' in k, pkgs)
+            pkgs_len = len(pkgs)
+            pkgs_count = 0
+            print('Unpack .deb debug packages:')
             for pkg in pkgs:
-                if "-dbg" in pkg:
-                    os.system('dpkg -x ' + os.path.join(target_pkg_path, pkg) + ' ' + target_build_path)
+                # TODO create cross compatible shell_comman_api android, linux, chrome os etc
+                checksum_line = subprocess.check_output([md5_cmd, os.path.join(target_pkg_path, pkg)]).strip()
+                match = re.search("([0-9a-fA-F]{32}) (.*)", checksum_line)
+                if match:
+                    checksum = match.group(1)
+                    if not checksum in self._package_hashes:
+                        os.system('dpkg -x ' + os.path.join(target_pkg_path, pkg) + ' ' + target_build_path)
+                        self._package_hashes.append(checksum)
+                pkgs_count = pkgs_count + 1
+                # Print progress bar kind of
+                sys.stdout.write('\r {0} / {1} '.format(pkgs_count, pkgs_len))
+                sys.stdout.flush()
+            print('Done')
+            pickle.dump(self._package_hashes, open(satt_pkg_cache_file, 'wb'), pickle.HIGHEST_PROTOCOL)
         else:
             print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
             print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
