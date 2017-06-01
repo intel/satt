@@ -230,7 +230,7 @@ class SattInstall:
         print("*** Install disassembler")
         print("**************************************************************")
         if (not os.path.exists(self._disassembler_path)):
-            download_disassembler()
+            self.download_disassembler()
         self.install_disassembler()
 
     def download_disassembler(self):
