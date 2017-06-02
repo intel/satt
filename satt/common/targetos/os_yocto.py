@@ -85,18 +85,35 @@ class YoctoOs(TargetOs):
         except:
             md5_cmd = 'md5sum'
 
-        # Hacked for Joule
-        # /builds/Joule/build/tmp-glibc/sysroots/intel-corei7-64
+        # Yocto specific *dbg*.dep file search abd unpack
         pkgtype="deb" # could be "ipk" or "rpm"
+
+        # Create md5 hash to keep count which packages has been unpacked
         satt_pkg_cache_file = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), '.satt-cache')
         if os.path.exists(satt_pkg_cache_file):
             self._package_hashes = pickle.load(open(satt_pkg_cache_file, 'rb'))
-        target_pkg_path = os.path.join(os.path.dirname(os.path.dirname(target_build_path)), 'deploy', pkgtype, 'corei7-64')
+
+        # Search for the deploy path from the build folders
+        # by travelling down path and search for the match
+        target_pkg_path = target_build_path
+        while(True):
+            target_pkg_path = os.path.dirname(target_pkg_path)
+            if (os.path.exists(os.path.join(target_pkg_path, 'deploy', pkgtype))):
+                target_pkg_path = os.path.join(target_pkg_path, 'deploy', pkgtype)
+                break
+            if (target_pkg_path == "/"):
+                target_pkg_path = False
+                break
+
         if os.path.exists(target_pkg_path):
             dbg_pkg_hash_list = []
-            print(target_pkg_path)
-            pkgs = os.walk(target_pkg_path).next()[2]
-            pkgs = filter(lambda k: '-dbg' in k, pkgs)
+            pkgs = []
+            # Search all dbg packages
+            for rootfolder, directors, fns in os.walk(target_pkg_path):
+                for subdir in directors:
+                    root, dirs, files = os.walk(os.path.join(target_pkg_path, subdir)).next()
+                    tmp_pkgs = filter(lambda k: '-dbg' in k, files)
+                    pkgs.extend([subdir + '/' + s for s in tmp_pkgs])
             pkgs_len = len(pkgs)
             pkgs_count = 0
             print('Unpack .deb debug packages:')
@@ -116,7 +133,6 @@ class YoctoOs(TargetOs):
             print('Done')
             pickle.dump(self._package_hashes, open(satt_pkg_cache_file, 'wb'), pickle.HIGHEST_PROTOCOL)
         else:
-            print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
             print("ERROR!!!!: Path does not exists, where debug symbol " + pkgtype + " packages should be !!!")
             print("Continuing without debug symbols, only interface functions will be visible!!!")
             time.sleep(5)
