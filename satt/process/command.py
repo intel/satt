@@ -150,6 +150,7 @@ class SattProcess:
 
     def CopyBinariesToTraceFolder(self):
         kernel_path = envstore.store.get_variable('sat_path_kernel')
+        modules_path = envstore.store.get_variable('sat_path_modules')
         if not os.path.exists(os.path.join(self._os._trace_path, 'binaries', 'kernel')):
             os.makedirs(os.path.join(self._os._trace_path, 'binaries', 'kernel'))
 
@@ -163,6 +164,19 @@ class SattProcess:
         elif os.path.isfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso32.so')):
             shutil.copyfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso32.so'),
                             os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32-sysenter.so'))
+        # Yocto arch/x86/entry/vdso
+        elif os.path.isfile(os.path.join(os.path.dirname(kernel_path), 'arch', 'x86', 'entry', 'vdso', 'vdso32.so.dbg')):
+            shutil.copyfile(os.path.join(os.path.dirname(kernel_path), 'arch', 'x86', 'entry', 'vdso', 'vdso32.so.dbg'),
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32.so'))
+        elif os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'entry', 'vdso', 'vdso32.so')):
+            shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'entry', 'vdso', 'vdso32.so'),
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32.so'))
+        # Ubuntu
+        # TODO check build-id to get debug version
+        # TODO check if shell is used
+        elif os.path.isfile(os.path.join(modules_path, 'vdso', 'vdso32.so')):
+            shutil.copyfile(os.path.join(modules_path, 'vdso', 'vdso32.so'),
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso32.so'))
 
         # 64-bit
         if os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'vdso', 'vdso64.so.dbg')):
@@ -174,6 +188,21 @@ class SattProcess:
         elif os.path.isfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso64.so')):
             shutil.copyfile(os.path.join(os.path.dirname(kernel_path), 'vdso', 'vdso64.so'),
                             os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+        # Yocto
+        elif os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'entry', 'vdso', 'vdso64.so.dbg')):
+            shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'entry', 'vdso', 'vdso64.so.dbg'),
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+        elif os.path.isfile(os.path.join(kernel_path, 'arch', 'x86', 'entry', 'vdso', 'vdso64.so')):
+            shutil.copyfile(os.path.join(kernel_path, 'arch', 'x86', 'entry', 'vdso', 'vdso64.so'),
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+        # Ubuntu
+        # TODO check build-id to get debug version
+        # TODO check if shell is used
+        elif os.path.isfile(os.path.join(modules_path, 'vdso', 'vdso64.so')):
+            shutil.copyfile(os.path.join(modules_path, 'vdso', 'vdso64.so'),
+                            os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vdso64.so'))
+
+        # Ubuntu
 
         if os.path.isfile(self._os.get_system_map_path()):
             shutil.copyfile(self._os.get_system_map_path(),
@@ -352,6 +381,10 @@ class SattProcess:
                        "-m " + os.path.join(self._os._trace_path, 'binaries', 'kernel', 'modules') + " ")
 
         path_helper += "-d " + self._os.get_debug_paths() + " "
+
+        # Host tracing, local host files can be used for processing
+        if envstore.get_instance().get_variable('sat_control_bus') == 'SHELL':
+            path_helper += "--host_tracing "
 
         path_helper += (os.path.join(self._os._trace_path, 'binaries', 'symbols') + " " +
                        os.path.join(self._os._trace_path, 'binaries') + " " +

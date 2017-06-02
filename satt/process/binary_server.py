@@ -84,6 +84,9 @@ def get_build_id(filename):
 
 #Check that object and symbols build id match
 def check_if_build_id_match(symbol, debug):
+    # if files are same, don't bother checking build_id
+    if (symbol == debug):
+        return True
     symbol_bid = get_build_id(symbol)
     debug_bid = get_build_id(debug)
     return symbol_bid == debug_bid
@@ -105,6 +108,7 @@ def main():
     parser = argparse.ArgumentParser(description='binary server')
     parser.add_argument('NEEDLE', help='file to find')
     parser.add_argument('-p', '--path_mapper', help='Path to sat-path-map binary', required=False)
+    parser.add_argument('--host_tracing', help='Host tracing, trace the host so host files can be used for disassembly', action='store_true', required=False)
     parser.add_argument('-k', '--kernel',  help='Path to kernel (vmlinux)', required=False)
     parser.add_argument('-m', '--modules', help='Path to kernel modules',   required=False)
     parser.add_argument('-d', '--debug', help='Debug symbols paths, ; separeted string',   required=False)
@@ -114,7 +118,7 @@ def main():
     # Take last haystack for file cache
     file_cache = args.HAYSTACKS[-1]
 
-    if os.path.exists(args.NEEDLE):
+    if os.path.exists(args.NEEDLE) and args.host_tracing:
         response = args.NEEDLE.rstrip()
 
     # Use first sat-path-map tool to search host side haystacks
@@ -137,7 +141,7 @@ def main():
             status, debug = check_for_debug_symbols(response)
 
         # Check if debug symbols found by name in given paths
-        if (SATT_OS == 3 or (SATT_OS == 0 and not debug)): #and args.debug:
+        if ((SATT_OS == 3 or SATT_OS == 0) and not debug): #and args.debug:
             sat_path_map_cmd = args.path_mapper + ' "' + args.NEEDLE + '" -k ' + args.kernel + ' -m ' + args.modules
             for hs in args.debug.split(';'):
                sat_path_map_cmd += ' ' + hs
