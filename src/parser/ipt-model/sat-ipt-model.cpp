@@ -58,8 +58,8 @@ public:
     ipt_output(INPUT& input) :
         got_to_eof_(), input_(input)
     {
-        context_.get_lost();
-
+        context_.lost_ = true;
+        context_.tnts_.clean();
         context_.resolve_relocation_callback =
             [this](rva& target) -> bool
             {
