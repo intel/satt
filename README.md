@@ -31,8 +31,9 @@ Web based UI will allow to study execution in function level from All CPU's, Pro
 ## Install SATT
 
 ### Install needed dependencies
+Ubuntu 16.04 tracing PC example:
 ```
-sudo apt install build-essential scons libelf-dev python-pip git binutils-dev autoconf libtool libiberty-dev zlib1g-dev python-dev (python-virtualenv) postgresql-9.x libpq-dev
+sudo apt install build-essential scons libelf-dev python-pip git binutils-dev autoconf libtool libiberty-dev zlib1g-dev python-dev python-virtualenv postgresql-9.5 libpq-dev
 ```
 
 ### Clone or Download SATT tool
@@ -70,19 +71,23 @@ Simple instructions how to use SATT
 ### Configure
 ```
 satt config
+```
+
+### Build SATT kernel module
+```
 satt build
 ```
 
 ### Tracing
 *NOTE: sudo needed in case tracing local machine*
 ```
-(sudo) satt trace
+satt trace
 ```
 
 ### Process the traces
 *NOTE: sudo needed in case processing trace taken from local machine*
 ```
-(sudo) satt process <given-trace-name>
+satt process <given-trace-name>
 ```
 
 ### Import & Launch UI
