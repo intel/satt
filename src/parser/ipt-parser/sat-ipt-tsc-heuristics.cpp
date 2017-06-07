@@ -38,6 +38,7 @@ struct tsc_item {
     uint64_t tsc_in_next_mtc;
     uint     mtc_count; // for TMA
     bool     known_rollover_points; // for TMA
+    bool     ovf_tsc_lost; // for OVF
 }; // tsc_item
 
 
@@ -726,11 +727,57 @@ void tsc_heuristics_fourth_round(tscs& tscs, uint32_t tscs_to_ctc, uint8_t mtc_s
 }
 
 /*
-Fill MTC timestamps till the end of the trace
+Give timestamp for OVF where there are no lost timestamp packets
+
+ 9d016                      9dad9                 9dc49   9df0a
+   |                          |       |    |   |    |       |
+   |                         ovf     ovf  ovf ovf  ovf      |
+   ts                                                       ts
+
+1. Find OVF
+2. Check previous and next timing packets - if not continuous
+   => set ovf_tsc_lost in tsc_item struct
+
 */
 void tsc_heuristics_fifth_round(tscs& tscs, uint32_t tscs_to_ctc, uint8_t mtc_shift)
 {
+    tscs::iterator it = tscs.begin();
+    std::vector<tsc_item*> ovf_items;
+    uint8_t  prev_mtc         = 0;
+    bool    first_item        = true;
+    bool    ts_lost;
 
+    for (; it != tscs.end(); it++) {
+        auto& t = *it;
+        switch (t.second.type) {
+        case tsc_item_type::OVF:
+            if (first_item) {
+                t.second.ovf_tsc_lost = true;
+            } else {
+                ovf_items.push_back(&t.second);
+            }
+            break;
+        case tsc_item_type::MTC:
+        case tsc_item_type::TMA:
+            if (ovf_items.size()) {
+                if ((uint8_t) (t.second.mtc - prev_mtc) <= 1)
+                    ts_lost = false;
+                else
+                    ts_lost = true;
+                for (auto ovf_it = ovf_items.begin() ; ovf_it != ovf_items.end(); ++ovf_it) {
+                    auto& ovf_t = *ovf_it;
+                    ovf_t->ovf_tsc_lost = ts_lost;
+                }
+            }
+            prev_mtc = t.second.mtc;
+            ovf_items.clear();
+            break;
+
+        default:
+            break;
+        }
+        first_item = false;
+    }
 }
 
 
@@ -1516,7 +1563,7 @@ public:
     void tsc(token& t)
     {
         tscs_->insert({input_.beginning_of_packet(),
-                       {tsc_item_type::TSC, 0, t.tsc, 0, 0, 0, 0, 0, false}});
+                       {tsc_item_type::TSC, 0, t.tsc, 0, 0, 0, 0, 0, false, false}});
         wait_for_tma_ = true;
     }
 
@@ -1524,20 +1571,20 @@ public:
     {
         // Skip MTCs tht comes between tsc and tma.
         if (!wait_for_tma_ && !in_psb_) {
-            tscs_->insert({input_.beginning_of_packet(), {tsc_item_type::MTC, t.ctc, MAX_TSC_VAL, 0, 0, 0, 0, 0, false}});
+            tscs_->insert({input_.beginning_of_packet(), {tsc_item_type::MTC, t.ctc, MAX_TSC_VAL, 0, 0, 0, 0, 0, false, false}});
         }
     }
 
     void tma(token& t)
     {
         tscs_->insert({input_.beginning_of_packet(),
-                       {tsc_item_type::TMA, 0, MAX_TSC_VAL, t.tma.ctc, t.tma.fast, 0, 0, 0, false}});
+                       {tsc_item_type::TMA, 0, MAX_TSC_VAL, t.tma.ctc, t.tma.fast, 0, 0, 0, false, false}});
         wait_for_tma_ = false;
     }
 
     void ovf(token& t)
     {
-        tscs_->insert({input_.beginning_of_packet(), {tsc_item_type::OVF, 0, MAX_TSC_VAL, 0, 0, 0, 0, 0, false}});
+        tscs_->insert({input_.beginning_of_packet(), {tsc_item_type::OVF, 0, MAX_TSC_VAL, 0, 0, 0, 0, 0, false, false}});
         strts_->insert({(ipt_pos)input_.beginning_of_packet(), tsc_item_type::OVF});
     }
 
@@ -1634,6 +1681,16 @@ void tsc_heuristics::apply()
     tsc_heuristics_second_round(*imp_->tscs_, tsc_ctc_ratio, mtc_freq);
     tsc_heuristics_third_round(*imp_->tscs_, tsc_ctc_ratio, mtc_freq);
     tsc_heuristics_fourth_round(*imp_->tscs_, tsc_ctc_ratio, mtc_freq);
+    tsc_heuristics_fifth_round(*imp_->tscs_, tsc_ctc_ratio, mtc_freq);
+
+    /* Debug dump out tscs list */
+    // std::string tscs_strings[] = {"TSC", "MTC", "TMA", "OVF", "PSB", "PGE"};
+    // for (tscs::iterator it = imp_->tscs_->begin(); it != imp_->tscs_->end(); it++) {
+    //     auto& t = *it;
+    //     printf("TSCS: %s - m:%u, ts:%" PRIx64 " lost_ts:%d\n",
+    //         tscs_strings[t.second.type].c_str(),
+    //         t.second.mtc, t.second.tsc, t.second.ovf_tsc_lost);
+    // }
 #if 0
     // PASS 1:
     // Assing timestamps for MTC's after TSC/TMA pair.
@@ -1915,6 +1972,10 @@ void tsc_heuristics::iterate_tsc_blocks(callback_func callback) const
                 // There is no end_tsc for that block, skip it
                 got_tsc = false;
             }
+        } else if (t->second.type == tsc_item_type::OVF &&
+                   t->second.ovf_tsc_lost == false) {
+            /* Overflow packet that does not break continuous timing (no lost MTC's) - just ignore */
+            continue;
         }
 
         if (!have_block) {
