@@ -66,7 +66,8 @@ bool ipt_task::get_earliest_tsc(uint64_t& tsc) const
 
     if (imp_->blocks_.size()) {
         tsc    = imp_->blocks_.front()->tsc_.first;
-        got_it = true;
+        if (tsc != 0)
+            got_it = true;
     }
 
     return got_it;
