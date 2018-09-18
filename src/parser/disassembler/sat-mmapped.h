@@ -19,6 +19,7 @@
 #include "sat-types.h"
 #include <string>
 #include <memory>
+#include <functional>
 
 namespace sat {
 

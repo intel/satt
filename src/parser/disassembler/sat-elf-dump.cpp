@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sstream>
 #include <memory>
+#include <functional>
 
 #define SAT_DEC(width) setw(width) << setfill(' ') << dec << right
 #define SAT_HEX(width) setw(width) << setfill('0') << hex << right
