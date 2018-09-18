@@ -211,7 +211,7 @@ class SattProcess:
         if os.path.isfile(self._os.get_vmlinux_path()):
             #
             extract_vmlinux = os.path.join(kernel_path, 'scripts', 'extract-vmlinux')
-            if os.path.isfile(extract_vmlinux) and os.path.basename(self._os.get_vmlinux_path()) == 'vmlinuz':
+            if os.path.isfile(extract_vmlinux) and 'vmlinuz' in os.path.basename(self._os.get_vmlinux_path()):
                 subprocess.call(extract_vmlinux + ' ' + self._os.get_vmlinux_path() + " > " +
                                 os.path.join(self._os._trace_path, 'binaries', 'kernel', 'vmlinux_'), shell=True)
             else:
