@@ -213,6 +213,7 @@ public:
         if (fup_check(c)) {
             return true;
         } else {
+            c.syscall_ = true;
             rva next = next_address(c);
             c.pc_ = c.tip_;
             c.output_instructions_before_call();

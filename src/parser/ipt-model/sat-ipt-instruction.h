@@ -47,6 +47,7 @@ struct context
         printf("get_lost\n");
         // Clean tnt buffer.
         tnts_.clean();
+        syscall_ = false;
     }
 
     void maybe_output_timestamp()
@@ -209,6 +210,7 @@ struct context
     //  block starting point (basically scheduler_tip packet). No intermediate info
     //  messages are sent out during this phase.
     bool        fast_forward_;
+    bool        syscall_;
 }; // context
 
 

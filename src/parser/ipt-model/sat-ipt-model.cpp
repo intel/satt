@@ -482,10 +482,21 @@ private:
                                            load_address))
              {
                  SAT_LOG(1, "...could not get iterator\n");
-                 context_.get_lost();
+                 if (context_.syscall_)
+                 {
+                    SAT_LOG(1, "Syscall Trampoline from %" PRIx64 " to %" PRIx64 "\n", context_.pc_, context_.tip_);
+                    context_.pc_ = context_.tip_;
+                    done_with_packet = true;
+                    context_.syscall_ = false;
+                 }
+                 else
+                 {
+                    context_.get_lost();
+                 }
                  break;
              }
 
+             context_.syscall_ = false;
              if (context_.instruction_count_ ==
                    context_.previously_output_instruction_count_ ||
                  context_.pending_output_call_ ||
