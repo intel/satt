@@ -78,7 +78,7 @@ namespace sat {
         return got_it;
     }
 
-    bool system_map::get_address(const string& function, rva& address) const
+    bool system_map::get_address(const string& function, rva& address, unsigned& size) const
     {
         bool got_it = false;
 
@@ -86,6 +86,13 @@ namespace sat {
             if (i->second == function) {
                 address = i->first;
                 got_it = true;
+
+                // Get size == next address - address
+                if (++i != functions_.end()) {
+                    size = (++i)->first - address;
+                } else {
+                    size = 0;
+                }
                 break;
             }
         }
@@ -93,4 +100,10 @@ namespace sat {
         return got_it;
     }
 
-}
+    bool system_map::get_address(const string& function, rva& address) const
+    {
+        unsigned size;
+        return get_address(function, address, size);
+    }
+
+}  // namespace sat

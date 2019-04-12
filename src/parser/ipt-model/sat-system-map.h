@@ -33,6 +33,7 @@ namespace sat {
 
         bool get_function(rva address, string& function, unsigned& offset) const;
         bool get_address(const string& function, rva& address) const;
+        bool get_address(const string& function, rva& address, unsigned& size) const;
 
     private:
         rva              begin_;

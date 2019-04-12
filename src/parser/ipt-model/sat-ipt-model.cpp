@@ -274,6 +274,11 @@ public:
                     PRIx64 " -> 0x%" PRIx64 "\n",
                     instruction::copy_user1_address_,
                     instruction::copy_user2_address_);
+
+            // Handle RETPOLINE mitigation
+            kernel_map_.get_address("__switch_to_asm",
+                                    cached_switch_to_asm_addr_,
+                                    cached_switch_to_asm_size_);
 #if 0
             kernel_map_.get_address("__memcpy", instruction::memcpy_address_);
             SAT_LOG(1, "will replace __memcpy (0x%" PRIx64 ") body with a ret\n",
@@ -562,6 +567,16 @@ private:
                  //printf("%" PRIx64 ": [%02" PRIu64 "] %s\n", context_.pc_, context_.call_stack_.size(), i->text().c_str());
                  next_address = i->next_address(context_);
                  previous_pc  = context_.pc_;
+
+                 // __switch_to_asm can use RETPOLINE mitigation
+                 // Which will call itself many times without returns
+                 // In those cases we just ignore call stack level increase
+                 context_.ignone_stack_manipulation_in_this_function_ = false;
+                 if (context_.pc_ >= cached_switch_to_asm_addr_ &&
+                     context_.pc_ < cached_switch_to_asm_addr_ + cached_switch_to_asm_size_) {
+                    context_.ignone_stack_manipulation_in_this_function_ = true;
+                 }
+
                  done_with_packet = ((*i).*execute)(context_);
 
 
@@ -759,6 +774,9 @@ private:
     file_backed_symbol_table               symbols_;
     file_backed_symbol_table               executables_;
     shared_ptr<symbol_table_file>          host_executables_;
+
+    rva                                    cached_switch_to_asm_addr_;
+    unsigned                               cached_switch_to_asm_size_;
 }; // ipt_output
 
 class ipt_model : public ipt_parser<input_from_file_block, ipt_output>

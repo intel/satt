@@ -142,6 +142,8 @@ private:
             // is useless, so discard the stack item altogether to
             // avoid a warning when we get the TIP.
             goto adjust_pc;
+        } else if (c.ignone_stack_manipulation_in_this_function_) {
+            goto adjust_pc;
         }
 
         c.output_instructions_before_call();
@@ -236,7 +238,7 @@ public:
         } else if (!c.tnts_.empty()) {
             if (c.tnts_.taken()) {
                 c.output_instructions();
-                c.pc_ = c.call_stack_.pop();                    
+                c.pc_ = c.call_stack_.pop();
                 if (c.pc_) {
                 // if (!c.ret_stack_.empty()) {
                 //     c.pc_ = c.ret_stack_.back();

@@ -30,7 +30,7 @@ using namespace std;
 
 struct context
 {
-    
+
     bool resolve_relocation(rva& target)
     {
         bool resolved = false;
@@ -160,7 +160,7 @@ struct context
     //         }
     //     }
     // }
-    // 
+    //
     // void set_tsc(uint64_t begin, uint64_t end)
     // {
     //     if (have_psb_) {
@@ -211,6 +211,9 @@ struct context
     //  messages are sent out during this phase.
     bool        fast_forward_;
     bool        syscall_;
+    // Handle RETPOLINE mitigation
+    // Special direct call handling flag, used in some cases
+    bool        ignone_stack_manipulation_in_this_function_;
 }; // context
 
 
