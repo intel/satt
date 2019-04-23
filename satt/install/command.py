@@ -290,7 +290,8 @@ class SattInstall:
         bin_accessed_paths.sort(key = len)
         if len(bin_accessed_paths):
             satt_symlink_path = os.path.join(bin_accessed_paths[0], 'satt')
-            if os.path.exists(satt_symlink_path):
+            if os.path.exists(satt_symlink_path) or \
+               os.path.islink(satt_symlink_path):
                 os.remove(satt_symlink_path)
 
             os.symlink(os.environ['SATT_EXEC'], satt_symlink_path)
